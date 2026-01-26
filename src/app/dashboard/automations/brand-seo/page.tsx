@@ -20,8 +20,10 @@ import {
     Mail,
     Loader2,
     CheckCircle2,
+    XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { startBrandAudit, type BrandAuditResponse } from "@/app/actions/brand-seo";
 
 interface FormData {
     companyName: string;
@@ -165,6 +167,9 @@ export default function BrandSeoPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const [runsRemaining, setRunsRemaining] = useState<number | null>(null);
 
     const stepsPerPage = 3;
     const totalSteps = Math.ceil(formFields.length / stepsPerPage);
@@ -191,10 +196,32 @@ export default function BrandSeoPage() {
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setIsSubmitting(false);
-        setIsSubmitted(true);
+        setSubmitError(null);
+
+        try {
+            // Build FormData from state
+            const data = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                data.append(key, value);
+            });
+
+            // Call the Server Action
+            const result = await startBrandAudit(data);
+
+            if (result.success) {
+                setJobId(result.jobId || null);
+                setRunsRemaining(result.runsRemaining ?? null);
+                setIsSubmitted(true);
+            } else {
+                // Handle validation or other errors
+                setSubmitError(result.message);
+            }
+        } catch (error) {
+            console.error('Submit error:', error);
+            setSubmitError('unexpected_error');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const isLastStep = currentStep === totalSteps - 1;
