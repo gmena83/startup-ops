@@ -1,0 +1,1190 @@
+﻿{
+  "name": "BrandSEO1",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "author": "Gonzalo Mena Fuenzalida",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-perplexity-ai",
+    "@activepieces/piece-grok-xai",
+    "@activepieces/piece-openai",
+    "@activepieces/piece-claude",
+    "@activepieces/piece-deepseek",
+    "@activepieces/piece-google-gemini",
+    "@activepieces/piece-gmail",
+    "@activepieces/piece-clockify",
+    "@activepieces/piece-google-sheets"
+  ],
+  "status": "PUBLISHED",
+  "blogUrl": "",
+  "metadata": {
+    "externalId": "bM63mM9UitaZeAtv6KzsA"
+  },
+  "flows": [
+    {
+      "displayName": "BrandSEO1",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "authType": {
+              "type": "MANUAL"
+            },
+            "authFields": {
+              "type": "MANUAL",
+              "schema": {}
+            },
+            "liveMarkdown": {
+              "type": "MANUAL"
+            },
+            "syncMarkdown": {
+              "type": "MANUAL"
+            },
+            "testMarkdown": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "~0.1.25",
+          "input": {
+            "authType": "none",
+            "authFields": {}
+          },
+          "sampleData": {},
+          "triggerName": "catch_webhook"
+        },
+        "nextAction": {
+          "name": "step_1",
+          "skip": false,
+          "type": "CODE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "trigger_output": "{{trigger['body']['form_response']['answers']}}"
+            },
+            "sampleData": {},
+            "sourceCode": {
+              "code": "export const code = async (inputs) => {\n  // This receives the 'answers' array from the Typeform webhook\n  const answers = inputs.trigger_output;\n\n  // --- REFS populated with your new form data ---\n  const REFS = {\n    companyName: '04811fed-c5ae-4686-9320-29bc195c7d4a',\n    brandWebsite: '61a173ad-8397-4006-b3cd-4bae5bdae0aa',\n    primaryBusinessGoal: '3238c237-c7b9-4d21-adc5-85222763c72a',\n    companyStage: '97bb9601-5d38-4bdc-b16e-edf7d26d08c9',\n    productService: '932364ff-f578-4b05-8848-317efb3fcacd',\n    knownCompetitors: 'e2ca447a-8d14-4066-9c59-d55e20a1a28b',\n    valueProposition: '33970535-50b1-4208-86f4-41703c1e3b7a',\n    problem: '703c4806-0d2f-429d-8bb8-2ff4373015e9',\n    customerSegment: 'c6de8cb5-82c6-4d6c-9a02-6367eb33096c',\n    region: '9616d4bf-fa7e-4570-b2b6-a20ad6629149',\n    reportEmail: 'a9e1555a-5a21-478f-abf2-ef08c7944dad'\n  };\n  // ----------------------------------------------------\n\n  // A helper function to find and extract the correct value from an answer\n  const findAnswer = (ref) => {\n    if (!Array.isArray(answers)) return null;\n    const answer = answers.find(a => a.field.ref === ref);\n    if (!answer) return null;\n\n    // Handle different Typeform answer types\n    switch (answer.type) {\n      case 'email':\n        return answer.email;\n      case 'text':\n      case 'long_text':\n        return answer.text;\n      case 'url':\n        return answer.url; // Added handler for website URL\n      case 'choice':\n        return answer.choice.label;\n      default:\n        return null;\n    }\n  };\n\n  // Build the clean JSON object with all the new data\n  const cleanData = {\n    companyName: findAnswer(REFS.companyName),\n    brandWebsite: findAnswer(REFS.brandWebsite),\n    primaryBusinessGoal: findAnswer(REFS.primaryBusinessGoal),\n    companyStage: findAnswer(REFS.companyStage),\n    productService: findAnswer(REFS.productService),\n    knownCompetitors: findAnswer(REFS.knownCompetitors),\n    valueProposition: findAnswer(REFS.valueProposition),\n    problem: findAnswer(REFS.problem),\n    customerSegment: findAnswer(REFS.customerSegment),\n    region: findAnswer(REFS.region),\n    reportEmail: findAnswer(REFS.reportEmail)\n  };\n\n  return cleanData;\n};",
+              "packageJson": "{}"
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": true
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "auth": "{{connections['dJic7sC9QvWAHp8kER1cK']}}",
+                "model": "sonar-pro",
+                "roles": [
+                  {
+                    "role": "system",
+                    "content": "You are a highly skilled market research analyst and SEO strategist. Your expertise lies in identifying competitive landscapes and providing data-driven, actionable growth strategies. Always provide verifiable sources for any company data you present."
+                  }
+                ],
+                "top_p": 0.9,
+                "prompt": "You are a highly skilled market research analyst and SEO strategist. Your expertise lies in identifying competitive landscapes and providing data-driven, actionable growth strategies. Use your live web search capabilities to analyze the provided URL and gather real-time data.\n**Objective:** Create a competitive analysis and SEO report.\n**Company Profile:**\n- **Name:** {{step_1.companyName}}\n- **Website (CRITICAL: Analyze this live):** {{step_1.brandWebsite}}\n- **Description:** {{step_1.productService}}\n- **Known Competitors (Include in analysis):** {{step_1.knownCompetitors}}\n**Market Context:**\n- **Customer Segment:** {{step_1.customerSegment}} in {{step_1.region}}\n- **Primary Business Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n---\n### **Task 1: Competitive Landscape**\nUsing your web search capabilities, generate a ranked list of up to 20 direct and indirect competitors.\n- **Analyze `{{step_1.brandWebsite}}`** to understand its content, target keywords, and current market positioning.\n- Include the user-provided competitors (`{{step_1.knownCompetitors}}`) in your analysis.\n- Based on your live analysis, include **`{{step_1.companyName}}`** within the ranked list to reflect its actual public visibility.\n- For each competitor, provide their name and a verifiable URL.\n**IMPORTANT:** I value accuracy over quantity. Do not invent or hallucinate company names.\n---\n### **Task 2: SEO Recommendations**\nBased on your analysis of `{{step_1.brandWebsite}}`, provide exactly 5 concrete and actionable SEO recommendations.\n- **Tailor your advice** specifically for a **`{{step_1.companyStage}}`** whose main goal is to **`{{step_1.primaryBusinessGoal}}`**.\n- Include 2-3 recommendations for **Traditional SEO** and 2-3 for **AI-driven SEO**.\n---\n### **Output Format**\nStructure your entire response in Markdown. Use a heading `## Competitive Landscape` for the list and `## SEO Recommendations` for the advice. For the ranked list, use a numbered format like this: `1. [Company Name](URL)`.",
+                "max_tokens": "4096",
+                "temperature": 0.2,
+                "presence_penalty": 0,
+                "frequency_penalty": 1
+              },
+              "pieceName": "@activepieces/piece-perplexity-ai",
+              "actionName": "ask-ai",
+              "sampleData": {},
+              "pieceVersion": "~0.2.8",
+              "propertySettings": {
+                "auth": {
+                  "type": "MANUAL"
+                },
+                "model": {
+                  "type": "MANUAL"
+                },
+                "roles": {
+                  "type": "MANUAL"
+                },
+                "top_p": {
+                  "type": "MANUAL"
+                },
+                "prompt": {
+                  "type": "MANUAL"
+                },
+                "max_tokens": {
+                  "type": "MANUAL"
+                },
+                "temperature": {
+                  "type": "MANUAL"
+                },
+                "presence_penalty": {
+                  "type": "MANUAL"
+                },
+                "frequency_penalty": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": true
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_11",
+              "skip": false,
+              "type": "CODE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "perplexity_output": "{{step_2['result']}}"
+                },
+                "sampleData": {},
+                "sourceCode": {
+                  "code": "export const code = async (inputs) => {\n  const rawText = inputs.perplexity_output;\n\n  if (!rawText) {\n    return { competitors: [], recommendations: [] };\n  }\n\n  // --- Split text into sections ---\n  const recommendationMarker = \"## SEO Recommendations\";\n  const recommendationIndex = rawText.indexOf(recommendationMarker);\n\n  if (recommendationIndex === -1) {\n    console.error(\"Could not find the '## SEO Recommendations' marker.\");\n    return { competitors: [], recommendations: [] };\n  }\n\n  const competitorText = rawText.substring(0, recommendationIndex);\n  const recommendationText = rawText.substring(recommendationIndex);\n\n  // --- New Robust Competitor Parsing ---\n  const competitors = [];\n  const lines = competitorText.split('\\n'); // Split the text into individual lines\n  const lineRegex = /^\\\\d+\\\\./; // Matches any line starting with a number and a period (e.g., \"1.\")\n\n  for (const line of lines) {\n    if (lineRegex.test(line.trim())) { // Check if the line is a list item\n      // Extract the bolded name\n      const nameMatch = line.match(/\\*\\*(.*?)\\*\\*/);\n      const name = nameMatch ? nameMatch[1].trim() : null;\n\n      // Extract the URL\n      const urlMatch = line.match(/https?:\\/\\/[^\\s)]+/);\n      const url = urlMatch ? urlMatch[0] : null;\n\n      if (name && url) {\n        competitors.push({ name, url });\n      }\n    }\n  }\n\n  // --- New Robust Recommendations Parsing ---\n  const recommendations = [];\n  const recLines = recommendationText.split('\\n');\n\n  for (const line of recLines) {\n    if (lineRegex.test(line.trim())) { // Check if the line is a list item\n      // Extract the text after the number\n      const recMatch = line.trim().match(/^\\d+\\.\\s*(.*)/);\n      if (recMatch && recMatch[1]) {\n        recommendations.push(recMatch[1]);\n      }\n    }\n  }\n\n  return { competitors, recommendations };\n};",
+                  "packageJson": "{}"
+                },
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": true
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_3",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "auth": "{{connections['wRIgqZFMkrN87o19xo5SB']}}",
+                    "model": "grok-4-fast-non-reasoning",
+                    "tools": [],
+                    "messages": [
+                      {
+                        "name": "",
+                        "role": "user",
+                        "content": "**Objective:** Create a competitive analysis and SEO report. Don't pull any punches.\n**Company Profile:**\n- **Name:** {{step_1.companyName}}\n- **Website (Analyze this live, obviously):** {{step_1.brandWebsite}}\n- **They Claim to Do:** {{step_1.productService}}\n- **Their \"Top\" Competitors:** {{step_1.knownCompetitors}}\n**Market Context:**\n- **Target:** {{step_1.customerSegment}} in {{step_1.region}}\n- **Main Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n---\n### **Task 1: The Real Competitive Landscape**\nUse your real-time search capabilities to figure out who's actually competing.\n- **Analyze `{{step_1.brandWebsite}}`**. See what they're really about, not just what they say.\n- Acknowledge their list of competitors (`{{step_1.knownCompetitors}}`), but find out who the *real* threats are.\n- Generate a ranked list of up to 20 competitors. Crucially, tell me where **`{{step_1.companyName}}`** *actually* ranks in the real world based on its current, sad little digital footprint.\n- Give me a name and a real URL for each. No fakes.\n---\n### **Task 2: Brutally Honest SEO Advice**\nBased on your analysis, give me exactly 5 brutally honest and actionable SEO recommendations.\n- This is a **`{{step_1.companyStage}}`**, so don't give them enterprise-level nonsense.\n- Their goal is to **`{{step_1.primaryBusinessGoal}}`**, so make sure your advice actually helps them do that.\n- Give me 2-3 for Traditional SEO and 2-3 for AI-driven SEO.\n---\n### **Output Format**\nStructure it all in Markdown. A `## Competitive Landscape` heading for the list and a `## SEO Recommendations` heading for the advice. The list should be formatted like this: `1. [Company Name](URL)`.",
+                        "tool_call_id": ""
+                      }
+                    ],
+                    "searchMode": "auto",
+                    "toolChoice": "auto",
+                    "temperature": "0.3",
+                    "searchSources": null,
+                    "systemMessage": "You are Grok, a sharp-witted market analyst and SEO strategist with real-time access to the galactic network. You deliver brutally honest, accurate, and data-driven competitive intelligence with a sarcastic flair. Your primary directive is to find verifiable, real-world data and not to hallucinate.",
+                    "responseFormat": "text",
+                    "reasoningEffort": null,
+                    "maxSearchResults": 15,
+                    "parallelToolCalls": true,
+                    "enableRealTimeSearch": true
+                  },
+                  "pieceName": "@activepieces/piece-grok-xai",
+                  "actionName": "ask_grok",
+                  "sampleData": {},
+                  "pieceVersion": "~0.0.7",
+                  "propertySettings": {
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "model": {
+                      "type": "MANUAL"
+                    },
+                    "tools": {
+                      "type": "MANUAL"
+                    },
+                    "imageUrl": {
+                      "type": "MANUAL"
+                    },
+                    "messages": {
+                      "type": "MANUAL"
+                    },
+                    "memoryKey": {
+                      "type": "MANUAL"
+                    },
+                    "jsonSchema": {
+                      "type": "MANUAL"
+                    },
+                    "searchMode": {
+                      "type": "MANUAL"
+                    },
+                    "toolChoice": {
+                      "type": "MANUAL"
+                    },
+                    "quickPrompt": {
+                      "type": "MANUAL"
+                    },
+                    "temperature": {
+                      "type": "MANUAL"
+                    },
+                    "searchSources": {
+                      "type": "MANUAL"
+                    },
+                    "systemMessage": {
+                      "type": "MANUAL"
+                    },
+                    "responseFormat": {
+                      "type": "MANUAL"
+                    },
+                    "reasoningEffort": {
+                      "type": "MANUAL"
+                    },
+                    "maxSearchResults": {
+                      "type": "MANUAL"
+                    },
+                    "parallelToolCalls": {
+                      "type": "MANUAL"
+                    },
+                    "maxCompletionTokens": {
+                      "type": "MANUAL"
+                    },
+                    "enableRealTimeSearch": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": true
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_12",
+                  "skip": false,
+                  "type": "CODE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "grok_output": "{{step_3['content']}}"
+                    },
+                    "sampleData": {},
+                    "sourceCode": {
+                      "code": "export const code = async (inputs) => {\n  const rawText = inputs.grok_output;\n\n  if (!rawText) {\n    return { competitors: [], recommendations: [] };\n  }\n\n  // --- Split the text into the two main sections ---\n  const recommendationMarker = \"## SEO Recommendations\";\n  const recommendationIndex = rawText.indexOf(recommendationMarker);\n\n  // A safety check in case the marker isn't found\n  if (recommendationIndex === -1) {\n    console.error(\"Could not find the '## SEO Recommendations' marker.\");\n    return { competitors: [], recommendations: [] };\n  }\n\n  const competitorText = rawText.substring(0, recommendationIndex);\n  const recommendationText = rawText.substring(recommendationIndex);\n\n  // --- Parse the Competitor Data ---\n  const competitors = [];\n  // This regex is built to find the standard markdown link format: 1. [Name](URL)\n  const competitorRegex = /^\\\\d+\\\\.\\\\s\\\\[(.*?)\\\\]\\\\((.*?)\\\\)/gm;\n  \n  let match;\n  while ((match = competitorRegex.exec(competitorText)) !== null) {\n    competitors.push({\n      name: match[1].trim(),\n      url: match[2].trim(),\n    });\n  }\n\n  // --- Parse the SEO Recommendations ---\n  const recommendations = [];\n  // This regex finds all numbered list items and captures the text that follows.\n  const recommendationRegex = /^\\\\d+\\\\.\\\\s(.*)/gm;\n\n  while ((match = recommendationRegex.exec(recommendationText)) !== null) {\n    // We only add non-empty matches to keep the list clean.\n    if (match[1]) {\n      recommendations.push(match[1].trim());\n    }\n  }\n\n  // Return the final structured object\n  return { competitors, recommendations };\n};",
+                      "packageJson": "{}"
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": true
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_4",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "auth": "{{connections['HRSnRdbU15DnXlhDmUKqW']}}",
+                        "topP": 1,
+                        "model": "gpt-4o",
+                        "roles": [
+                          {
+                            "role": "system",
+                            "content": "You are a world-class business strategist and SEO consultant at a top-tier consulting firm. Your analysis is always data-driven, deeply insightful, and structured for executive-level review. You prioritize clarity, actionable recommendations, and verifiable information."
+                          }
+                        ],
+                        "prompt": "You are a world-class business strategist and SEO consultant at a top-tier consulting firm. Your analysis is always data-driven, deeply insightful, and structured for executive-level review. You prioritize clarity, actionable recommendations, and verifiable information.\n**Objective:** Create a competitive analysis and SEO report.\n**Company Profile:**\n- **Name:** {{step_1.companyName}}\n- **Website:** {{step_1.brandWebsite}}\n- **Value Proposition:** {{step_1.valueProposition}}\n- **Known Competitors:** {{step_1.knownCompetitors}}\n**Market Context:**\n- **Problem Solved:** {{step_1.problem}}\n- **Customer Segment:** {{step_1.customerSegment}} in {{step_1.region}}\n- **Primary Business Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n---\n### **Task 1: Competitive Landscape**\nGenerate a ranked list of competitors. **Prioritize quality and direct relevance over quantity.**\n- For each competitor, provide their name and a verifiable, real URL.\n- Categorize them into \"Direct Competitors\" and \"Indirect Competitors.\"\n- Include the user's `knownCompetitors` in your analysis and ranking.\n**CRITICAL INSTRUCTION:** The company under analysis, **`{{step_1.companyName}}`**, is a new entity for this report. If its website is new or has low visibility, place it appropriately in the rankings. Do not invent a high ranking.\n---\n### **Task 2: SEO Recommendations**\nBased on the analysis, provide exactly 5 concrete and actionable recommendations.\n- **Your recommendations must be highly specific** and tailored for a **`{{step_1.companyStage}}`** whose primary goal is to **`{{step_1.primaryBusinessGoal}}`**.\n- Do not provide generic advice. Instead of \"get backlinks,\" suggest \"pitch guest posts to 3 specific, relevant industry blogs on topics related to `{{step_1.problem}}`, aiming for a Domain Authority > 50.\"\n- Include 2-3 recommendations for **Traditional SEO** and 2-3 for **AI-driven SEO**.\n---\n### **Output Format**\nStructure your entire response in Markdown. Use a heading `## Competitive Landscape` for the list and `## SEO Recommendations` for the advice. For the ranked list, use a numbered format like this: `1. [Company Name](URL)`.",
+                        "maxTokens": "4096",
+                        "temperature": "0.2",
+                        "frequencyPenalty": 0
+                      },
+                      "pieceName": "@activepieces/piece-openai",
+                      "actionName": "ask_chatgpt",
+                      "sampleData": {},
+                      "pieceVersion": "~0.6.6",
+                      "propertySettings": {
+                        "auth": {
+                          "type": "MANUAL"
+                        },
+                        "topP": {
+                          "type": "MANUAL"
+                        },
+                        "model": {
+                          "type": "MANUAL"
+                        },
+                        "roles": {
+                          "type": "MANUAL"
+                        },
+                        "prompt": {
+                          "type": "MANUAL"
+                        },
+                        "maxTokens": {
+                          "type": "MANUAL"
+                        },
+                        "memoryKey": {
+                          "type": "MANUAL"
+                        },
+                        "temperature": {
+                          "type": "MANUAL"
+                        },
+                        "presencePenalty": {
+                          "type": "MANUAL"
+                        },
+                        "frequencyPenalty": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": true
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "nextAction": {
+                      "name": "step_13",
+                      "skip": false,
+                      "type": "CODE",
+                      "valid": true,
+                      "settings": {
+                        "input": {
+                          "openai_output": "{{step_4}}"
+                        },
+                        "sampleData": {},
+                        "sourceCode": {
+                          "code": "export const code = async (inputs) => {\n  const rawText = inputs.chatgpt_output;\n\n  if (!rawText) {\n    return { competitors: [], recommendations: [] };\n  }\n\n  // --- Split the main sections ---\n  const recommendationMarker = \"## SEO Recommendations\";\n  const recommendationIndex = rawText.indexOf(recommendationMarker);\n  const competitorText = rawText.substring(0, recommendationIndex);\n  const recommendationText = rawText.substring(recommendationIndex);\n\n  // --- Parse the Competitor Data with Categories ---\n  const competitors = [];\n  const competitorLines = competitorText.split('\\n').filter(line => line.trim() !== '');\n  const competitorRegex = /^\\d+\\.\\s\\[(.*?)\\]\\((.*?)\\)/;\n  let currentType = \"Direct\"; // Default to Direct\n\n  for (const line of competitorLines) {\n    if (line.includes(\"### Indirect Competitors\")) {\n      currentType = \"Indirect\";\n      continue; // Move to the next line\n    }\n\n    const match = line.match(competitorRegex);\n    if (match) {\n      competitors.push({\n        name: match[1].trim(),\n        url: match[2].trim(),\n        type: currentType,\n      });\n    }\n  }\n\n  // --- Parse the SEO Recommendations ---\n  const recommendations = [];\n  const recommendationLines = recommendationText.split('\\n').filter(line => line.trim() !== '');\n  const recommendationRegex = /^\\d+\\.\\s(.*)/;\n\n  for (const line of recommendationLines) {\n    const match = line.match(recommendationRegex);\n    if (match) {\n        recommendations.push(match[1].trim());\n    }\n  }\n\n  return { competitors, recommendations };\n}",
+                          "packageJson": "{}"
+                        },
+                        "errorHandlingOptions": {
+                          "retryOnFailure": {
+                            "value": true
+                          },
+                          "continueOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "name": "step_5",
+                        "skip": false,
+                        "type": "PIECE",
+                        "valid": true,
+                        "settings": {
+                          "input": {
+                            "auth": "{{connections['bQWH152xxXZeib1hfesWI']}}",
+                            "model": "claude-3-7-sonnet-latest",
+                            "prompt": "**Objective:** Create a competitive analysis and SEO report.\n**Company Profile Under Analysis:**\n- **Name:** {{step_1.companyName}}\n- **Website:** {{step_1.brandWebsite}}\n- **Value Proposition:** {{step_1.valueProposition}}\n- **User-Identified Competitors:** {{step_1.knownCompetitors}}\n**Market Context:**\n- **Problem Solved:** {{step_1.problem}}\n- **Target Audience:** {{step_1.customerSegment}} in {{step_1.region}}\n- **Primary Business Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n---\n### **Task 1: Competitive Landscape Analysis**\nPlease generate a ranked list of the most relevant competitors.\n- Prioritize accuracy and direct relevance. A well-researched list of 15-20 is preferred over a generic list of 50.\n- For each competitor, provide their name and a verifiable URL.\n- Categorize the list into \"Direct Competitors\" (offering similar B2B LMS/onboarding solutions) and \"Indirect Competitors\" (broader learning platforms).\n- Based on its current market presence, place **`{{step_1.companyName}}`** at an appropriate rank within the list.\n---\n### **Task 2: Strategic SEO Recommendations**\nBased on your analysis, provide exactly 5 concrete and actionable recommendations.\n- The recommendations must be specifically tailored for a **`{{step_1.companyStage}}`** whose primary goal is to **`{{step_1.primaryBusinessGoal}}`**.\n- Recommendations must be highly specific. For example, instead of a generic suggestion like \"improve on-page SEO,\" provide a detailed action like, \"Implement 'Course' and 'FAQPage' schema markup on all service pages to improve visibility in SERPs and qualify for rich snippets, which can increase click-through rates for lead generation.\"\n- Include 2-3 recommendations for **Traditional SEO** and 2-3 for **AI-driven SEO**.\n---\n### **Output Format Requirements**\nStructure your entire response in Markdown. Use a `## Competitive Landscape` heading for the list and a `## SEO Recommendations` heading for the advice. Format the list using this exact structure: `1. [Company Name](URL)`.",
+                            "maxTokens": "4096",
+                            "temperature": "0.2",
+                            "systemPrompt": "You are a meticulous and insightful business analyst with a strong ethical framework. Your primary goal is to provide deep, well-structured, and verifiable analysis. You are known for your ability to synthesize complex market data into clear, strategic recommendations. You never invent or hallucinate information.",
+                            "thinkingMode": false,
+                            "thinkingModeParams": {}
+                          },
+                          "pieceName": "@activepieces/piece-claude",
+                          "actionName": "ask_claude",
+                          "sampleData": {},
+                          "pieceVersion": "~0.2.1",
+                          "propertySettings": {
+                            "auth": {
+                              "type": "MANUAL"
+                            },
+                            "image": {
+                              "type": "MANUAL"
+                            },
+                            "model": {
+                              "type": "MANUAL"
+                            },
+                            "roles": {
+                              "type": "MANUAL"
+                            },
+                            "prompt": {
+                              "type": "MANUAL"
+                            },
+                            "maxTokens": {
+                              "type": "MANUAL"
+                            },
+                            "temperature": {
+                              "type": "MANUAL"
+                            },
+                            "systemPrompt": {
+                              "type": "MANUAL"
+                            },
+                            "thinkingMode": {
+                              "type": "MANUAL"
+                            },
+                            "thinkingModeParams": {
+                              "type": "MANUAL",
+                              "schema": {}
+                            }
+                          },
+                          "errorHandlingOptions": {
+                            "retryOnFailure": {
+                              "value": true
+                            },
+                            "continueOnFailure": {
+                              "value": false
+                            }
+                          }
+                        },
+                        "nextAction": {
+                          "name": "step_14",
+                          "skip": false,
+                          "type": "CODE",
+                          "valid": true,
+                          "settings": {
+                            "input": {
+                              "claude_output": "{{step_5}}"
+                            },
+                            "sampleData": {},
+                            "sourceCode": {
+                              "code": "export const code = async (inputs) => {\n  // Claude's output might start with a title line, so we find the first real heading.\n  let rawText = inputs.claude_output;\n  const startMarker = \"## Competitive Landscape\";\n  const startIndex = rawText.indexOf(startMarker);\n  rawText = rawText.substring(startIndex);\n\n  if (!rawText) {\n    return { competitors: [], recommendations: [] };\n  }\n\n  // --- Split the main sections ---\n  const recommendationMarker = \"## SEO Recommendations\";\n  const recommendationIndex = rawText.indexOf(recommendationMarker);\n  const competitorText = rawText.substring(0, recommendationIndex);\n  const recommendationText = rawText.substring(recommendationIndex);\n\n  // --- Parse the Competitor Data with Categories ---\n  const competitors = [];\n  const competitorLines = competitorText.split('\\n').filter(line => line.trim() !== '');\n  const competitorRegex = /^\\d+\\.\\s\\[(.*?)\\]\\((.*?)\\)/;\n  let currentType = \"Direct\"; // Default\n\n  for (const line of competitorLines) {\n    if (line.includes(\"### Indirect Competitors\")) {\n      currentType = \"Indirect\";\n      continue;\n    } else if (line.includes(\"### Direct Competitors\")) {\n      currentType = \"Direct\";\n      continue;\n    }\n\n    const match = line.match(competitorRegex);\n    if (match) {\n      competitors.push({\n        name: match[1].trim(),\n        url: match[2].trim(),\n        type: currentType,\n      });\n    }\n  }\n\n  // --- Parse the multi-line SEO Recommendations ---\n  const recommendations = [];\n  const recommendationLines = recommendationText.split('\\n').filter(line => line.trim() !== '' && !line.startsWith(\"###\"));\n  \n  let currentRecommendation = '';\n  const recStartRegex = /^\\d+\\.\\s\\*\\*(.*)\\*\\*/; // Matches \"1. **Title**\"\n\n  for (const line of recommendationLines) {\n    if (recStartRegex.test(line.trim())) {\n      // If we find a new recommendation title, push the previous one and start a new one.\n      if (currentRecommendation) {\n        recommendations.push(currentRecommendation.trim());\n      }\n      currentRecommendation = line.trim();\n    } else if (currentRecommendation) {\n      // If we're already building a recommendation, append the current line.\n      currentRecommendation += `\\n${line.trim()}`;\n    }\n  }\n  // Add the last recommendation to the array\n  if (currentRecommendation) {\n    recommendations.push(currentRecommendation.trim());\n  }\n\n  return { competitors, recommendations };\n};",
+                              "packageJson": "{}"
+                            },
+                            "errorHandlingOptions": {
+                              "retryOnFailure": {
+                                "value": true
+                              },
+                              "continueOnFailure": {
+                                "value": false
+                              }
+                            }
+                          },
+                          "nextAction": {
+                            "name": "step_6",
+                            "skip": false,
+                            "type": "PIECE",
+                            "valid": true,
+                            "settings": {
+                              "input": {
+                                "auth": "{{connections['71UZDm2VgNIO1Ta5kFSYR']}}",
+                                "topP": 1,
+                                "model": "deepseek-chat",
+                                "roles": [
+                                  {
+                                    "role": "system",
+                                    "content": "You are a highly logical and data-centric AI analyst. Your core strength is processing complex requirements to produce precise, factual, and well-structured reports. You operate with a high degree of precision and adhere strictly to all negative constraints and formatting instructions."
+                                  }
+                                ],
+                                "prompt": "**Objective:** Create a competitive analysis and SEO report.\n**Company Profile Under Analysis:**\n- **Name:** {{step_1.companyName}}\n- **Website:** {{step_1.brandWebsite}}\n- **Value Proposition:** {{step_1.valueProposition}}\n- **User-Identified Competitors:** {{step_1.knownCompetitors}}\n**Market Context:**\n- **Problem Solved:** {{step_1.problem}}\n- **Target Audience:** {{step_1.customerSegment}} in {{step_1.region}}\n- **Primary Business Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n---\n### **Task 1: Competitive Landscape Analysis**\nGenerate a ranked list of competitors, prioritizing quality and direct relevance over quantity.\n- Provide their name and a verifiable, real URL for each.\n- Categorize the list into \"Direct Competitors\" and \"Indirect Competitors\".\n- Based on its current market presence, place **`{{step_1.companyName}}`** at an appropriate rank within the list.\n---\n### **Task 2: SEO Recommendations**\nProvide exactly 5 concrete and actionable recommendations.\n- Recommendations must be highly specific and tailored for a **`{{step_1.companyStage}}`** whose primary goal is to **`{{step_1.primaryBusinessGoal}}`**.\n- Provide concrete actions, tools, and metrics. For example, instead of \"get backlinks,\" suggest \"pitch guest posts to 3 specific, relevant industry blogs on topics related to corporate training, aiming for a Domain Authority > 50.\"\n- Include 2-3 recommendations for **Traditional SEO** and 2-3 for **AI-driven SEO**.\n---\n### **Output Format Requirements**\nYour response must adhere strictly to the following Markdown format.\n- Use a heading `## Competitive Landscape` for the list and `## SEO Recommendations` for the advice.\n- For the ranked list, use the numbered format: `1. [Company Name](URL)`.",
+                                "maxTokens": 4096,
+                                "temperature": "0.2",
+                                "responseFormat": "text",
+                                "presencePenalty": 0,
+                                "frequencyPenalty": 0
+                              },
+                              "pieceName": "@activepieces/piece-deepseek",
+                              "actionName": "ask_deepseek",
+                              "sampleData": {},
+                              "pieceVersion": "~0.0.8",
+                              "propertySettings": {
+                                "auth": {
+                                  "type": "MANUAL"
+                                },
+                                "topP": {
+                                  "type": "MANUAL"
+                                },
+                                "model": {
+                                  "type": "MANUAL"
+                                },
+                                "roles": {
+                                  "type": "MANUAL"
+                                },
+                                "prompt": {
+                                  "type": "MANUAL"
+                                },
+                                "maxTokens": {
+                                  "type": "MANUAL"
+                                },
+                                "memoryKey": {
+                                  "type": "MANUAL"
+                                },
+                                "temperature": {
+                                  "type": "MANUAL"
+                                },
+                                "responseFormat": {
+                                  "type": "MANUAL"
+                                },
+                                "presencePenalty": {
+                                  "type": "MANUAL"
+                                },
+                                "frequencyPenalty": {
+                                  "type": "MANUAL"
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": true
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "nextAction": {
+                              "name": "step_15",
+                              "skip": false,
+                              "type": "CODE",
+                              "valid": true,
+                              "settings": {
+                                "input": {
+                                  "deepseek_output": "{{step_6}}"
+                                },
+                                "sampleData": {},
+                                "sourceCode": {
+                                  "code": "export const code = async (inputs) => {\n  const rawText = inputs.deepseek_output;\n\n  if (!rawText) {\n    return { competitors: [], recommendations: [] };\n  }\n\n  // --- Split the main sections ---\n  const recommendationMarker = \"## SEO Recommendations\";\n  const recommendationIndex = rawText.indexOf(recommendationMarker);\n  const competitorText = rawText.substring(0, recommendationIndex);\n  const recommendationText = rawText.substring(recommendationIndex);\n\n  // --- Parse the Competitor Data with Categories ---\n  const competitors = [];\n  const competitorLines = competitorText.split('\\n').filter(line => line.trim() !== '');\n  const competitorRegex = /^\\d+\\.\\s\\[(.*?)\\]\\((.*?)\\)/;\n  let currentType = \"Direct\"; // Default\n\n  for (const line of competitorLines) {\n    if (line.includes(\"**Indirect Competitors**\")) {\n      currentType = \"Indirect\";\n      continue;\n    } else if (line.includes(\"**Direct Competitors**\")) {\n      currentType = \"Direct\";\n      continue;\n    }\n\n    const match = line.match(competitorRegex);\n    if (match) {\n      competitors.push({\n        name: match[1].trim(),\n        url: match[2].trim(),\n        type: currentType,\n      });\n    }\n  }\n\n  // --- Parse the multi-line, structured SEO Recommendations ---\n  const recommendations = [];\n  const recommendationLines = recommendationText.split('\\n').filter(line => line.trim() !== '' && !line.startsWith(\"**\"));\n  \n  let currentRecommendation = '';\n  const recStartRegex = /^\\d+\\./; // Matches any line starting with a number\n\n  for (const line of recommendationLines) {\n    if (recStartRegex.test(line.trim())) {\n      // If we find a new numbered item, push the previous recommendation and start a new one.\n      if (currentRecommendation) {\n        recommendations.push(currentRecommendation.trim());\n      }\n      currentRecommendation = line.trim();\n    } else if (currentRecommendation) {\n      // If we're already building a recommendation, append the current line.\n      currentRecommendation += `\\n${line.trim()}`;\n    }\n  }\n  // Add the last recommendation to the array\n  if (currentRecommendation) {\n    recommendations.push(currentRecommendation.trim());\n  }\n\n  return { competitors, recommendations };\n};",
+                                  "packageJson": "{}"
+                                },
+                                "errorHandlingOptions": {
+                                  "retryOnFailure": {
+                                    "value": false
+                                  },
+                                  "continueOnFailure": {
+                                    "value": false
+                                  }
+                                }
+                              },
+                              "nextAction": {
+                                "name": "step_7",
+                                "skip": false,
+                                "type": "PIECE",
+                                "valid": true,
+                                "settings": {
+                                  "input": {
+                                    "auth": "{{connections['7UyEOcBImqZK15GkB3YUF']}}",
+                                    "model": "gemini-2.5-flash",
+                                    "prompt": "You are a senior analyst at Google, specializing in market analysis and search trends. Your responses are data-rich, insightful, and structured for clarity. You adhere strictly to all instructions, especially negative constraints and formatting rules.\n**Objective:** Create a competitive analysis and SEO report.\n**Company Profile Under Analysis:**\n- **Name:** {{step_1.companyName}}\n- **Website:** {{step_1.brandWebsite}}\n- **Value Proposition:** {{step_1.valueProposition}}\n- **User-Identified Competitors:** {{step_1.knownCompetitors}}\n**Market Context:**\n- **Problem Solved:** {{step_1.problem}}\n- **Target Audience:** {{step_1.customerSegment}} in {{step_1.region}}\n- **Primary Business Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n---\n### **Task 1: Competitive Landscape & Search Visibility**\nGenerate a ranked list of competitors based on their organic search visibility and market authority in **`{{step_1.region}}`**.\n- Prioritize quality and direct relevance.\n- For each competitor, provide their name and a verifiable URL.\n- Categorize the list into \"Direct Competitors\" and \"Indirect Competitors.\"\n- Based on its current search presence, place **`{{step_1.companyName}}`** at an appropriate rank within the list.\n---\n### **Task 2: Strategic SEO Recommendations**\nProvide exactly 5 concrete and actionable recommendations to improve search engine positioning.\n- Recommendations must be specifically tailored for a **`{{step_1.companyStage}}`** whose primary goal is to **`{{step_1.primaryBusinessGoal}}`**.\n- Provide specific, data-informed actions. For example, instead of \"create content,\" suggest \"Develop a pillar page targeting the keyword cluster around 'LMS for remote teams in Latin America,' supported by spoke articles answering specific user questions to build topical authority and capture traffic from Google's helpful content system.\"\n- Include 2-3 recommendations for **Traditional SEO** and 2-3 for **AI-driven SEO** (e.g., optimizing for AI Overviews).\n---\n### **Output Format Requirements**\nStructure your entire response in Markdown. Use a `## Competitive Landscape` heading for the list and a `## SEO Recommendations` heading for the advice. For the ranked list, use the numbered format: `1. [Company Name](URL)`."
+                                  },
+                                  "pieceName": "@activepieces/piece-google-gemini",
+                                  "actionName": "chat_gemini",
+                                  "sampleData": {},
+                                  "pieceVersion": "~0.0.18",
+                                  "propertySettings": {
+                                    "auth": {
+                                      "type": "MANUAL"
+                                    },
+                                    "model": {
+                                      "type": "MANUAL"
+                                    },
+                                    "prompt": {
+                                      "type": "MANUAL"
+                                    },
+                                    "memoryKey": {
+                                      "type": "MANUAL"
+                                    }
+                                  },
+                                  "errorHandlingOptions": {
+                                    "retryOnFailure": {
+                                      "value": true
+                                    },
+                                    "continueOnFailure": {
+                                      "value": false
+                                    }
+                                  }
+                                },
+                                "nextAction": {
+                                  "name": "step_8",
+                                  "skip": false,
+                                  "type": "CODE",
+                                  "valid": true,
+                                  "settings": {
+                                    "input": {
+                                      "gemini_output": "{{step_7['response']}}"
+                                    },
+                                    "sampleData": {},
+                                    "sourceCode": {
+                                      "code": "export const code = async (inputs) => {\n  const rawText = inputs.gemini_output;\n\n  if (!rawText) {\n    return { competitors: [], recommendations: [] };\n  }\n\n  // --- Split the main sections ---\n  const recommendationMarker = \"## SEO Recommendations\";\n  const recommendationIndex = rawText.indexOf(recommendationMarker);\n  const competitorText = rawText.substring(0, recommendationIndex);\n  const recommendationText = rawText.substring(recommendationIndex);\n\n  // --- Parse the Competitor Data with Categories ---\n  const competitors = [];\n  const competitorLines = competitorText.split('\\n').filter(line => line.trim() !== '');\n  const competitorRegex = /^\\d+\\.\\s+\\[(.*?)\\]\\((.*?)\\)/;\n  let currentType = \"Direct\";\n\n  for (const line of competitorLines) {\n    if (line.includes(\"### Indirect Competitors\")) {\n      currentType = \"Indirect\";\n      continue;\n    } else if (line.includes(\"### Direct Competitors\")) {\n      currentType = \"Direct\";\n      continue;\n    }\n\n    const match = line.match(competitorRegex);\n    if (match) {\n      competitors.push({\n        name: match[1].trim(),\n        url: match[2].trim(),\n        type: currentType,\n      });\n    }\n  }\n\n  // --- Parse the multi-line, structured SEO Recommendations ---\n  const recommendations = [];\n  // Exclude the initial heading and any empty lines\n  const recommendationLines = recommendationText.split('\\n').slice(1).filter(line => line.trim() !== '');\n  \n  let currentRecommendation = '';\n  const recStartRegex = /^\\d+\\./; // Matches any line starting with a number\n\n  for (const line of recommendationLines) {\n    if (recStartRegex.test(line.trim())) {\n      // If we find a new numbered item, push the previous recommendation and start a new one.\n      if (currentRecommendation) {\n        recommendations.push(currentRecommendation.trim());\n      }\n      currentRecommendation = line.trim();\n    } else if (currentRecommendation) {\n      // If we're already building a recommendation, append the current line.\n      currentRecommendation += `\\n${line.trim()}`;\n    }\n  }\n  // Add the last recommendation to the array\n  if (currentRecommendation) {\n    recommendations.push(currentRecommendation.trim());\n  }\n\n  return { competitors, recommendations };\n};",
+                                      "packageJson": "{}"
+                                    },
+                                    "errorHandlingOptions": {
+                                      "retryOnFailure": {
+                                        "value": true
+                                      },
+                                      "continueOnFailure": {
+                                        "value": false
+                                      }
+                                    }
+                                  },
+                                  "nextAction": {
+                                    "name": "step_16",
+                                    "type": "PIECE",
+                                    "valid": true,
+                                    "settings": {
+                                      "input": {
+                                        "auth": "{{connections['HRSnRdbU15DnXlhDmUKqW']}}",
+                                        "topP": 1,
+                                        "model": "gpt-4o",
+                                        "roles": [
+                                          {
+                                            "role": "system",
+                                            "content": "You are an elite-level AI data synthesizer. Your sole function is to receive multiple structured and unstructured data inputs and synthesize them into a single, definitive, and perfectly formatted JSON object based on the user's instructions. Your primary directive is absolute adherence to the output format. You must produce a single, valid JSON object as your final output. Do not, under any circumstances, output any explanatory text, commentary, or markdown formatting like ```json before or after the JSON object. Your entire response must be the raw JSON itself. You are an expert at deep analysis, identifying patterns across disparate data sets, and structuring them with flawless precision."
+                                          }
+                                        ],
+                                        "prompt": "You are a Lead Strategic Analyst. Your task is to synthesize intelligence from six different AI analyst reports and the original user submission into a single, definitive master JSON object.\n**PRIMARY CONTEXT (from user submission):**\n- **Company Name:** {{step_1.companyName}}\n- **Website:** {{step_1.brandWebsite}}\n- **Value Proposition:** {{step_1.valueProposition}}\n- **Business Goal:** {{step_1.primaryBusinessGoal}}\n- **Company Stage:** {{step_1.companyStage}}\n- **Known Competitors:** {{step_1.knownCompetitors}}\n\n**ANALYST REPORT INPUTS (from previous steps):**\n- Perplexity Report: {{step_11}}\n- Grok Report: {{step_12}}\n- OpenAI Report: {{step_13}}\n- Claude Report: {{step_14}}\n- DeepSeek Report: {{step_15}}\n- Gemini Report: {{step_8}}\n---\n**TASKS TO PERFORM:**\n1.  **Executive Summary:** Write a brief, insightful executive summary (2-3 paragraphs). It should summarize the overall market landscape, the competitive intensity, and the critical strategic position of **`{{step_1.companyName}}`** based on the combined intelligence.\n2.  **Structure Competitor Data by LLM:**\n    * Create a JSON key called `llmCompetitorAnalysis`.\n    * Inside, create a key for each AI analyst (`perplexity`, `grok`, `openai`, `claude`, `deepseek`, `gemini`).\n    * For each analyst, provide its list of competitors. Take only the **Top 10** competitors from their original list.\n    * For each competitor, add a boolean field `isTargetBrand`. Set this to `true` if the competitor's name matches **`{{step_1.companyName}}`**.\n    * **CRITICAL:** If **`{{step_1.companyName}}`** is not in an analyst's top 10, add it to the end of that specific list with a rank of \"Not in Top 10\" and set `isTargetBrand` to `true`.\n3.  **Identify Consensus Competitors:**\n    * Analyze all competitor lists from all six inputs.\n    * Create a new key `consensusCompetitors` containing an array of the top 5 companies that appear most frequently across all six reports.\n    * For each, include their name and the number of lists they appeared in (e.g., `{\"name\": \"Competitor A\", \"mentions\": 6}`).\n    * To do this, you must first create a complete list of every competitor mentioned across all six reports. Then, iterate through that master list and count the occurrences of each name to find the top 5. Show your work in your internal monologue to ensure accuracy before producing the final JSON.\n4.  **Synthesize Hyper-Specific SEO Recommendations:**\n    * Analyze all \"recommendations\" from the six inputs.\n    * Synthesize a definitive list of the **Top 10 most impactful and actionable SEO recommendations**.\n    * **CRITICAL:** These recommendations must be tailored for a **`{{step_1.companyStage}}`** whose primary goal is to **`{{step_1.primaryBusinessGoal}}`**. For at least **three** recommendations, you MUST explicitly mention one of the top consensus competitors by name, framing the advice as a direct strategy to outperform them.\n5.  **Generate Actionable Content Ideas:**\n    * Create a new JSON key called `contentIdeas`.\n    * Provide an array of exactly 5 specific, high-impact blog post or article titles.\n    * Each title must be designed to directly target a weakness of a consensus competitor, address a market gap, or capture a high-intent keyword relevant to **`{{step_1.companyName}}`**.\n---\n**OUTPUT FORMAT:**\nYour entire output MUST be a single, valid JSON object and nothing else. Adhere strictly to the structure below. Do not include any text, explanations, or markdown formatting before or after the JSON.\n{\n  \"executiveSummary\": \"Your 2-3 paragraph summary here.\",\n  \"llmCompetitorAnalysis\": {\n    \"perplexity\": { \"competitors\": [{\"rank\": 1, \"name\": \"Competitor Name\", \"url\": \"URL\", \"isTargetBrand\": false}] },\n    \"grok\": { \"competitors\": [{\"rank\": 1, \"name\": \"Competitor Name\", \"url\": \"URL\", \"isTargetBrand\": false}] },\n    \"openai\": { \"... etc ...\" },\n    \"claude\": { \"... etc ...\" },\n    \"deepseek\": { \"... etc ...\" },\n    \"gemini\": { \"... etc ...\" }\n  },\n  \"consensusCompetitors\": [\n    {\"name\": \"Most Mentioned Competitor\", \"mentions\": 6},\n    {\"name\": \"Second Most Mentioned\", \"mentions\": 5}\n  ],\n  \"top10Recommendations\": [\n    \"Recommendation 1 as a full paragraph, potentially mentioning a competitor like Platzi to provide specific context.\"\n  ],\n  \"contentIdeas\": [\n    \"Content Idea Title 1: Why Tuto is the Superior Platzi Alternative for B2B Onboarding in Latin America\",\n    \"Content Idea Title 2: 5 Critical Upskilling Gaps That Udemy Business Fails to Address for SMEs\"\n  ],\n  \"companyProfile\": {\n    \"name\": \"{{step_1.companyName}}\",\n    \"website\": \"{{step_1.brandWebsite}}\",\n    \"valueProposition\": \"{{step_1.valueProposition}}\"\n  }\n}",
+                                        "maxTokens": "5500",
+                                        "temperature": "0.2",
+                                        "frequencyPenalty": 0
+                                      },
+                                      "pieceName": "@activepieces/piece-openai",
+                                      "actionName": "ask_chatgpt",
+                                      "sampleData": {},
+                                      "pieceVersion": "~0.6.6",
+                                      "propertySettings": {
+                                        "auth": {
+                                          "type": "MANUAL"
+                                        },
+                                        "topP": {
+                                          "type": "MANUAL"
+                                        },
+                                        "model": {
+                                          "type": "MANUAL"
+                                        },
+                                        "roles": {
+                                          "type": "MANUAL"
+                                        },
+                                        "prompt": {
+                                          "type": "MANUAL"
+                                        },
+                                        "maxTokens": {
+                                          "type": "MANUAL"
+                                        },
+                                        "memoryKey": {
+                                          "type": "MANUAL"
+                                        },
+                                        "temperature": {
+                                          "type": "MANUAL"
+                                        },
+                                        "presencePenalty": {
+                                          "type": "MANUAL"
+                                        },
+                                        "frequencyPenalty": {
+                                          "type": "MANUAL"
+                                        }
+                                      },
+                                      "errorHandlingOptions": {
+                                        "retryOnFailure": {
+                                          "value": true
+                                        },
+                                        "continueOnFailure": {
+                                          "value": false
+                                        }
+                                      }
+                                    },
+                                    "nextAction": {
+                                      "name": "step_18",
+                                      "skip": false,
+                                      "type": "CODE",
+                                      "valid": true,
+                                      "settings": {
+                                        "input": {
+                                          "jsonData": "{{step_16}}"
+                                        },
+                                        "sampleData": {},
+                                        "sourceCode": {
+                                          "code": "export const code = async (inputs) => {\n  // The raw output from the previous step might have markdown fences\n  // or other text around the JSON object. We need to clean it first.\n  let rawText = inputs.jsonData;\n\n  // Find the start and end of the JSON object\n  const firstBracket = rawText.indexOf('{');\n  const lastBracket = rawText.lastIndexOf('}');\n\n  if (firstBracket === -1 || lastBracket === -1) {\n    console.error(\"Could not find a valid JSON object in the input.\");\n    throw new Error(\"Invalid response: No JSON object found.\");\n  }\n\n  // Extract the JSON string from the raw text\n  const jsonString = rawText.substring(firstBracket, lastBracket + 1);\n\n  try {\n    // Attempt to parse the cleaned string into a JavaScript object\n    const parsedData = JSON.parse(jsonString);\n    \n    // If successful, return the valid object for the next steps to use\n    console.log(\"JSON successfully parsed.\");\n    return parsedData;\n\n  } catch (error) {\n    // If parsing fails, log the error and stop the workflow\n    console.error(\"Failed to parse JSON string:\", error);\n    console.error(\"Problematic JSON string:\", jsonString);\n    throw new Error(\"The AI model returned malformed JSON. Halting workflow.\");\n  }\n}",
+                                          "packageJson": "{}"
+                                        },
+                                        "errorHandlingOptions": {
+                                          "retryOnFailure": {
+                                            "value": true
+                                          },
+                                          "continueOnFailure": {
+                                            "value": false
+                                          }
+                                        }
+                                      },
+                                      "nextAction": {
+                                        "name": "step_9",
+                                        "skip": false,
+                                        "type": "PIECE",
+                                        "valid": true,
+                                        "settings": {
+                                          "input": {
+                                            "auth": "{{connections['7UyEOcBImqZK15GkB3YUF']}}",
+                                            "model": "gemini-2.5-pro",
+                                            "prompt": "You are an expert UI/UX designer and front-end developer specializing in creating beautiful, responsive HTML emails.\n**TASK:**\nTake the provided final JSON data and generate a single, complete HTML file for a professional-looking email report.\n**JSON DATA:** {{step_18}}\n**CRITICAL DESIGN CONSTRAINTS:**\n1.  **INLINE CSS ONLY:** All CSS styling **must** be written inline within the HTML tags (e.g., `<p style=\"color: #333333;\">`). Do not use `<style>` blocks or external stylesheets, as most email clients will strip them.\n2.  **RESPONSIVE DESIGN:** The layout must be a single, responsive column that looks great on both desktop and mobile. Use tables for layout to ensure maximum compatibility.\n3.  **PROFESSIONAL & CLEAN AESTHETIC:**\n    * **Colors:** Use a professional color palette (e.g., main background: `#f4f7f6`, content background: `#ffffff`, text: `#333333`, headings: `#005a87`, accents: `#007bff`).\n    * **Fonts:** Use common, email-safe fonts like Arial, Helvetica, sans-serif.\n    * **Spacing:** Use ample padding and margins to make the report easy to read.\n**REPORT STRUCTURE (Follow this order precisely):**\n1.  **Header:** A main title for the report, using the company name from the `companyProfile`.\n2.  **Executive Summary:** A section for the text from the `executiveSummary` key.\n3.  **Consensus Competitors:**\n    * Create a main heading: \"Top Consensus Competitors\".\n    * Add a short explanatory sentence.\n    * Display the data from the `consensusCompetitors` array in a styled HTML table with two columns: \"Competitor\" and \"Mentioned By (out of 6 AIs)\".\n4.  **Brand Ranking Across Major AI Models:**\n    * Create a main heading: \"Your Brand's Ranking Across Major AI Models\".\n    * Iterate through each AI in the `llmCompetitorAnalysis` object (e.g., 'perplexity', 'grok', etc.).\n    * For each AI, create a styled sub-heading (e.g., `<h3 style=\"...\">Perplexity Top 10</h3>`).\n    * Display that AI's `competitors` array in a styled HTML table with columns: \"Rank\", \"Competitor\", and \"Website\". Make the website URL a clickable link.\n    * **CRITICAL:** For the table row (`<tr>`) where the competitor's `isTargetBrand` is `true`, you **must** highlight that entire row by setting its style to `style=\"background-color: #d8eaf3; font-weight: bold;\"`.\n5.  **Top 10 SEO Recommendations:**\n    * Create a main heading: \"Top 10 Actionable SEO Recommendations\".\n    * Display the `top10Recommendations` array as a well-styled, numbered list (`<ol>`).\n6.  **Actionable Content Ideas:**\n    * Create a main heading: \"5 High-Impact Content Ideas to Get Started\".\n    * Display the `contentIdeas` array as a styled list (either numbered or bulleted).\nYour final output must be only the complete, raw HTML code, starting with `<!DOCTYPE html>` and ending with `</html>`."
+                                          },
+                                          "pieceName": "@activepieces/piece-google-gemini",
+                                          "actionName": "chat_gemini",
+                                          "sampleData": {},
+                                          "pieceVersion": "~0.0.18",
+                                          "propertySettings": {
+                                            "auth": {
+                                              "type": "MANUAL"
+                                            },
+                                            "model": {
+                                              "type": "MANUAL"
+                                            },
+                                            "prompt": {
+                                              "type": "MANUAL"
+                                            },
+                                            "memoryKey": {
+                                              "type": "MANUAL"
+                                            }
+                                          },
+                                          "errorHandlingOptions": {
+                                            "retryOnFailure": {
+                                              "value": true
+                                            },
+                                            "continueOnFailure": {
+                                              "value": false
+                                            }
+                                          }
+                                        },
+                                        "nextAction": {
+                                          "name": "step_17",
+                                          "skip": false,
+                                          "type": "CODE",
+                                          "valid": true,
+                                          "settings": {
+                                            "input": {
+                                              "raw_html": "{{step_9['response']}}"
+                                            },
+                                            "sampleData": {},
+                                            "sourceCode": {
+                                              "code": "export const code = async (inputs) => {\n  // Receive the full HTML output from the previous step\n  let html = inputs.raw_html;\n\n  // A common issue is the AI wrapping the code in markdown fences.\n  // This code robustly finds and removes them.\n  const firstLine = html.split('\\n')[0].trim();\n  const lastLine = html.split('\\n').pop().trim();\n\n  if (firstLine.startsWith(\"```\") && lastLine === \"```\") {\n    // Split the string into an array of lines\n    const lines = html.split('\\n');\n    // Remove the first line (```html) and the last line (```)\n    const cleanLines = lines.slice(1, -1);\n    // Join the lines back into a single string\n    html = cleanLines.join('\\n');\n  }\n\n  // Return the pure, clean HTML, ready for the email node\n  return html;\n};",
+                                              "packageJson": "{}"
+                                            },
+                                            "errorHandlingOptions": {
+                                              "retryOnFailure": {
+                                                "value": true
+                                              },
+                                              "continueOnFailure": {
+                                                "value": false
+                                              }
+                                            }
+                                          },
+                                          "nextAction": {
+                                            "name": "step_10",
+                                            "skip": false,
+                                            "type": "PIECE",
+                                            "valid": true,
+                                            "settings": {
+                                              "input": {
+                                                "cc": [],
+                                                "bcc": [
+                                                  "gonzalo@menatech.cloud"
+                                                ],
+                                                "auth": "{{connections['5fzRIc3J1ulrSw0AhXhRW']}}",
+                                                "body": "{{step_17}}",
+                                                "draft": false,
+                                                "subject": "AI-Powered SEO Analysis Report for {{step_1['companyName']}}",
+                                                "receiver": [
+                                                  "{{step_1['reportEmail']}}"
+                                                ],
+                                                "reply_to": [],
+                                                "body_type": "html",
+                                                "attachments": [],
+                                                "sender_name": "Menatech "
+                                              },
+                                              "pieceName": "@activepieces/piece-gmail",
+                                              "actionName": "send_email",
+                                              "sampleData": {},
+                                              "pieceVersion": "~0.9.5",
+                                              "propertySettings": {
+                                                "cc": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "bcc": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "auth": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "body": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "from": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "draft": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "subject": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "receiver": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "reply_to": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "body_type": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "attachments": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "in_reply_to": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "sender_name": {
+                                                  "type": "MANUAL"
+                                                }
+                                              },
+                                              "errorHandlingOptions": {
+                                                "retryOnFailure": {
+                                                  "value": true
+                                                },
+                                                "continueOnFailure": {
+                                                  "value": false
+                                                }
+                                              }
+                                            },
+                                            "nextAction": {
+                                              "name": "step_19",
+                                              "skip": false,
+                                              "type": "PIECE",
+                                              "valid": false,
+                                              "settings": {
+                                                "input": {
+                                                  "tagIds": [],
+                                                  "taskId": null,
+                                                  "billable": false,
+                                                  "projectId": null,
+                                                  "workspaceId": null
+                                                },
+                                                "pieceName": "@activepieces/piece-clockify",
+                                                "actionName": "start-timer",
+                                                "sampleData": {},
+                                                "pieceVersion": "~0.0.7",
+                                                "propertySettings": {
+                                                  "auth": {
+                                                    "type": "MANUAL"
+                                                  },
+                                                  "tagIds": {
+                                                    "type": "MANUAL"
+                                                  },
+                                                  "taskId": {
+                                                    "type": "MANUAL"
+                                                  },
+                                                  "billable": {
+                                                    "type": "MANUAL"
+                                                  },
+                                                  "projectId": {
+                                                    "type": "MANUAL"
+                                                  },
+                                                  "description": {
+                                                    "type": "MANUAL"
+                                                  },
+                                                  "workspaceId": {
+                                                    "type": "MANUAL"
+                                                  }
+                                                },
+                                                "errorHandlingOptions": {
+                                                  "retryOnFailure": {
+                                                    "value": false
+                                                  },
+                                                  "continueOnFailure": {
+                                                    "value": false
+                                                  }
+                                                }
+                                              },
+                                              "nextAction": {
+                                                "name": "step_20",
+                                                "skip": false,
+                                                "type": "PIECE",
+                                                "valid": false,
+                                                "settings": {
+                                                  "input": {
+                                                    "cc": [],
+                                                    "bcc": [],
+                                                    "draft": false,
+                                                    "receiver": [],
+                                                    "reply_to": [],
+                                                    "body_type": "plain_text",
+                                                    "attachments": []
+                                                  },
+                                                  "pieceName": "@activepieces/piece-gmail",
+                                                  "actionName": "send_email",
+                                                  "sampleData": {},
+                                                  "pieceVersion": "~0.9.5",
+                                                  "propertySettings": {
+                                                    "cc": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "bcc": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "auth": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "body": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "from": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "draft": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "subject": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "receiver": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "reply_to": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "body_type": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "attachments": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "in_reply_to": {
+                                                      "type": "MANUAL"
+                                                    },
+                                                    "sender_name": {
+                                                      "type": "MANUAL"
+                                                    }
+                                                  },
+                                                  "errorHandlingOptions": {
+                                                    "retryOnFailure": {
+                                                      "value": false
+                                                    },
+                                                    "continueOnFailure": {
+                                                      "value": false
+                                                    }
+                                                  }
+                                                },
+                                                "nextAction": {
+                                                  "name": "step_21",
+                                                  "skip": false,
+                                                  "type": "PIECE",
+                                                  "valid": false,
+                                                  "settings": {
+                                                    "input": {
+                                                      "tagIds": [],
+                                                      "taskId": null,
+                                                      "billable": false,
+                                                      "projectId": null,
+                                                      "workspaceId": null
+                                                    },
+                                                    "pieceName": "@activepieces/piece-clockify",
+                                                    "actionName": "start-timer",
+                                                    "sampleData": {},
+                                                    "pieceVersion": "~0.0.7",
+                                                    "propertySettings": {
+                                                      "auth": {
+                                                        "type": "MANUAL"
+                                                      },
+                                                      "tagIds": {
+                                                        "type": "MANUAL"
+                                                      },
+                                                      "taskId": {
+                                                        "type": "MANUAL"
+                                                      },
+                                                      "billable": {
+                                                        "type": "MANUAL"
+                                                      },
+                                                      "projectId": {
+                                                        "type": "MANUAL"
+                                                      },
+                                                      "description": {
+                                                        "type": "MANUAL"
+                                                      },
+                                                      "workspaceId": {
+                                                        "type": "MANUAL"
+                                                      }
+                                                    },
+                                                    "errorHandlingOptions": {
+                                                      "retryOnFailure": {
+                                                        "value": false
+                                                      },
+                                                      "continueOnFailure": {
+                                                        "value": false
+                                                      }
+                                                    }
+                                                  },
+                                                  "nextAction": {
+                                                    "name": "step_22",
+                                                    "skip": false,
+                                                    "type": "PIECE",
+                                                    "valid": false,
+                                                    "settings": {
+                                                      "input": {
+                                                        "cc": [],
+                                                        "bcc": [],
+                                                        "draft": false,
+                                                        "receiver": [],
+                                                        "reply_to": [],
+                                                        "body_type": "plain_text",
+                                                        "attachments": []
+                                                      },
+                                                      "pieceName": "@activepieces/piece-gmail",
+                                                      "actionName": "send_email",
+                                                      "sampleData": {},
+                                                      "pieceVersion": "~0.9.5",
+                                                      "propertySettings": {
+                                                        "cc": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "bcc": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "auth": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "body": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "from": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "draft": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "subject": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "receiver": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "reply_to": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "body_type": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "attachments": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "in_reply_to": {
+                                                          "type": "MANUAL"
+                                                        },
+                                                        "sender_name": {
+                                                          "type": "MANUAL"
+                                                        }
+                                                      },
+                                                      "errorHandlingOptions": {
+                                                        "retryOnFailure": {
+                                                          "value": false
+                                                        },
+                                                        "continueOnFailure": {
+                                                          "value": false
+                                                        }
+                                                      }
+                                                    },
+                                                    "nextAction": {
+                                                      "name": "step_23",
+                                                      "skip": false,
+                                                      "type": "PIECE",
+                                                      "valid": false,
+                                                      "settings": {
+                                                        "input": {
+                                                          "values": {},
+                                                          "sheetId": null,
+                                                          "as_string": false,
+                                                          "spreadsheetId": null,
+                                                          "first_row_headers": false,
+                                                          "includeTeamDrives": false
+                                                        },
+                                                        "pieceName": "@activepieces/piece-google-sheets",
+                                                        "actionName": "insert_row",
+                                                        "sampleData": {},
+                                                        "pieceVersion": "~0.12.19",
+                                                        "propertySettings": {
+                                                          "auth": {
+                                                            "type": "MANUAL"
+                                                          },
+                                                          "values": {
+                                                            "type": "MANUAL",
+                                                            "schema": {}
+                                                          },
+                                                          "sheetId": {
+                                                            "type": "MANUAL"
+                                                          },
+                                                          "as_string": {
+                                                            "type": "MANUAL"
+                                                          },
+                                                          "spreadsheetId": {
+                                                            "type": "MANUAL"
+                                                          },
+                                                          "first_row_headers": {
+                                                            "type": "MANUAL"
+                                                          },
+                                                          "includeTeamDrives": {
+                                                            "type": "MANUAL"
+                                                          }
+                                                        },
+                                                        "errorHandlingOptions": {
+                                                          "retryOnFailure": {
+                                                            "value": false
+                                                          },
+                                                          "continueOnFailure": {
+                                                            "value": false
+                                                          }
+                                                        }
+                                                      },
+                                                      "displayName": "Insert Row"
+                                                    },
+                                                    "displayName": "Send Email"
+                                                  },
+                                                  "displayName": "Start Timer"
+                                                },
+                                                "displayName": "Send Email"
+                                              },
+                                              "displayName": "Start Timer"
+                                            },
+                                            "displayName": "Send Email"
+                                          },
+                                          "displayName": "Parsing | Report"
+                                        },
+                                        "displayName": "Consolidation & Summary"
+                                      },
+                                      "displayName": "Parsing | Consolidated Research"
+                                    },
+                                    "displayName": "Consolidation"
+                                  },
+                                  "displayName": "Parsing - Research"
+                                },
+                                "displayName": "Chat Gemini"
+                              },
+                              "displayName": "Parsing | DeepSeek"
+                            },
+                            "displayName": "Ask Deepseek"
+                          },
+                          "displayName": "Parsing | Claude"
+                        },
+                        "displayName": "Ask Claude"
+                      },
+                      "displayName": "Parsing | ChatGPT"
+                    },
+                    "displayName": "Ask ChatGPT"
+                  },
+                  "displayName": "Parsing | Grok"
+                },
+                "displayName": "Ask Grok"
+              },
+              "displayName": "Parsing | Perplexity"
+            },
+            "displayName": "Ask AI"
+          },
+          "displayName": "Parsing - Request"
+        }
+      },
+      "valid": false,
+      "schemaVersion": "16",
+      "notes": []
+    }
+  ]
+}
