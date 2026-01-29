@@ -38,8 +38,8 @@ const socialLinks = [
 
 export function Footer() {
     return (
-        <footer className="bg-[#080c14] border-t border-white/5">
-            <div className="container-custom py-16">
+        <footer className="bg-[#080c14] border-t border-white/5 mt-32">
+            <div className="container-custom py-24">
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
                     {/* Brand Column */}
                     <div className="col-span-2">
@@ -124,25 +124,42 @@ export function Footer() {
                     <div>
                         <h4 className="font-semibold text-white mb-4">Legal</h4>
                         <ul className="space-y-3">
-                            {footerLinks.legal.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-gray-400 hover:text-white text-sm transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
+                            <li>
+                                <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
+                                    Privacy Policy
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
+                                    Terms of Service
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/data-management" className="text-gray-400 hover:text-white text-sm transition-colors">
+                                    Data Management
+                                </Link>
+                            </li>
                         </ul>
                     </div>
                 </div>
 
                 {/* Bottom Bar */}
                 <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-gray-500 text-sm">
-                        © {new Date().getFullYear()} StartupOPS. All rights reserved.
-                    </p>
+                    <div className="flex flex-col md:flex-row items-center gap-2 text-sm text-gray-500">
+                        <p>© {new Date().getFullYear()} StartupOPS.</p>
+                        <span className="hidden md:inline text-gray-700">•</span>
+                        <p>
+                            A product by{" "}
+                            <a
+                                href="https://menatech.cloud"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                                Menatech.cloud
+                            </a>
+                        </p>
+                    </div>
                     <p className="text-gray-500 text-sm">
                         Made with ❤️ for founders everywhere
                     </p>

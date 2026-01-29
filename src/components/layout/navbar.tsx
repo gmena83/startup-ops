@@ -6,16 +6,19 @@ import { Menu, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useLanguage } from "@/components/ui/language-provider";
 
 const navLinks = [
-    { href: "#features", label: "Features" },
-    { href: "#how-it-works", label: "How It Works" },
-    { href: "#pricing", label: "Pricing" },
+    { href: "#features", label: "nav.features" },
+    { href: "#how-it-works", label: "nav.howItWorks" },
+    { href: "#pricing", label: "nav.pricing" },
 ];
 
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { locale, setLocale, t } = useLanguage();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -62,18 +65,30 @@ export function Navbar() {
                                     href={link.href}
                                     className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
                                 >
-                                    {link.label}
+                                    {t(link.label)}
                                 </Link>
                             ))}
                         </div>
 
                         {/* Desktop CTA Buttons */}
                         <div className="hidden md:flex items-center gap-3">
+                            <ThemeToggle />
+                            {/* Language Toggle */}
+                            <button
+                                onClick={() => setLocale(locale === "en" ? "es" : "en")}
+                                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                                aria-label="Toggle language"
+                            >
+                                <span className={cn(locale === "en" ? "text-white" : "text-gray-500")}>EN</span>
+                                <span className="text-gray-600">/</span>
+                                <span className={cn(locale === "es" ? "text-white" : "text-gray-500")}>ES</span>
+                            </button>
+
                             <Button variant="ghost" size="sm" asChild>
-                                <Link href="/login">Log In</Link>
+                                <Link href="/login">{t("nav.login")}</Link>
                             </Button>
                             <Button variant="primary" size="sm" asChild>
-                                <Link href="/dashboard">Get Started</Link>
+                                <Link href="/dashboard">{t("nav.getStarted")}</Link>
                             </Button>
                         </div>
 
@@ -126,17 +141,29 @@ export function Navbar() {
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="text-gray-300 hover:text-white transition-colors text-lg font-medium py-2"
                                         >
-                                            {link.label}
+                                            {t(link.label)}
                                         </Link>
                                     ))}
 
                                     <div className="h-px bg-white/10 my-4" />
 
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <ThemeToggle />
+                                        <button
+                                            onClick={() => setLocale(locale === "en" ? "es" : "en")}
+                                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                                        >
+                                            <span className={cn(locale === "en" ? "text-white" : "text-gray-500")}>EN</span>
+                                            <span className="text-gray-600">/</span>
+                                            <span className={cn(locale === "es" ? "text-white" : "text-gray-500")}>ES</span>
+                                        </button>
+                                    </div>
+
                                     <Button variant="secondary" className="w-full" asChild>
-                                        <Link href="/login">Log In</Link>
+                                        <Link href="/login">{t("nav.login")}</Link>
                                     </Button>
                                     <Button variant="primary" className="w-full" asChild>
-                                        <Link href="/dashboard">Get Started</Link>
+                                        <Link href="/dashboard">{t("nav.getStarted")}</Link>
                                     </Button>
                                 </div>
                             </div>

@@ -36,6 +36,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { LanguageProvider } from "@/components/ui/language-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -44,7 +46,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased bg-[#0a0f1a] text-white`}>
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

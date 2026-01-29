@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { startBrandAudit, type BrandAuditResponse } from "@/app/actions/brand-seo";
+import { ProcessingAnimation } from "@/components/automations/processing-animation";
 
 interface FormData {
     companyName: string;
@@ -227,27 +228,20 @@ export default function BrandSeoPage() {
     const isLastStep = currentStep === totalSteps - 1;
     const progress = ((currentStep + 1) / totalSteps) * 100;
 
+
+
     if (isSubmitted) {
         return (
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-4xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <GlassCard className="text-center py-12" interactive={false}>
-                        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <CheckCircle2 className="w-10 h-10 text-green-400" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-3">
-                            Analysis Started!
-                        </h2>
-                        <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                            Our AI swarm is now analyzing your brand and competitors.
-                            You&apos;ll receive a comprehensive SEO report at{" "}
-                            <span className="text-white">{formData.reportEmail}</span> within 5-10 minutes.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <GlassCard className="text-center py-12 bg-black/40" interactive={false}>
+                        <ProcessingAnimation />
+
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
                             <Button variant="secondary" asChild>
                                 <Link href="/dashboard">Back to Dashboard</Link>
                             </Button>
