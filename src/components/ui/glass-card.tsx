@@ -39,7 +39,9 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
                     // Base glass styles
                     "relative rounded-xl",
                     "bg-white/[0.03] backdrop-blur-xl",
-                    "border border-white/[0.08]",
+                    // Use style for border color to avoid Oklab/Motion conflict
+                    // "border border-white/[0.08]", 
+                    "border",
                     // Padding
                     paddingStyles[padding],
                     // Gradient border effect
@@ -50,6 +52,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
                     ],
                     className
                 )}
+                style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}
                 whileHover={
                     interactive
                         ? {

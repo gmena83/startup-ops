@@ -9,22 +9,22 @@
 :root {
   /* Light Mode Defaults */
   --background: #ffffff;
-  --background-secondary: #f3f4f6; /* gray-100 */
+  --background-secondary: #f5f7fa; /* Light Gray */
   --background-tertiary: #e5e7eb; /* gray-200 */
   
-  --foreground: #111827; /* gray-900 */
-  --foreground-muted: #4b5563; /* gray-600 */
-  --foreground-subtle: #6b7280; /* gray-500 */
+  --foreground: #0a1628; /* Dark Navy as primary text */
+  --foreground-muted: #6b7280; /* Medium Gray */
+  --foreground-subtle: #9ca3af; /* gray-400 */
   
-  /* Accent colors - Electric blue & Cyan */
-  --accent-primary: #2563eb; /* blue-600 */
-  --accent-secondary: #0891b2; /* cyan-600 */
+  /* Brand Colors */
+  --accent-primary: #2b9aff; /* Primary Blue */
+  --accent-secondary: #00d4ff; /* Cyan/Turquoise */
   --accent-tertiary: #7c3aed; /* violet-600 */
   
   /* Success, Warning, Error */
   --success: #059669;
   --warning: #d97706;
-  --error: #dc2626;
+  --error: #ff6b6b; /* Coral Red */
   
   /* Glassmorphism (Light) */
   --glass-bg: rgba(255, 255, 255, 0.7);
@@ -32,16 +32,16 @@
   --glass-hover: rgba(0, 0, 0, 0.05);
   
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
-  --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
-  --gradient-hero: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
-  --gradient-glow: radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+  --gradient-primary: linear-gradient(135deg, #2b9aff 0%, #00d4ff 100%);
+  --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #2b9aff 100%);
+  --gradient-hero: linear-gradient(180deg, #f5f7fa 0%, #e0f2fe 100%);
+  --gradient-glow: radial-gradient(circle at center, rgba(43, 154, 255, 0.15) 0%, transparent 70%);
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.3);
+  --shadow-glow: 0 0 20px rgba(43, 154, 255, 0.3);
   
   /* Border radius */
   --radius-sm: 0.375rem;
@@ -58,35 +58,35 @@
 
 .dark {
   /* Dark Mode Overrides */
-  --background: #0a0f1a;
-  --background-secondary: #111827;
+  --background: #0a1628; /* Dark Navy */
+  --background-secondary: #111827; /* Darker than navy */
   --background-tertiary: #1f2937;
   
-  --foreground: #f9fafb;
+  --foreground: #f5f7fa; /* Light Gray */
   --foreground-muted: #9ca3af;
-  --foreground-subtle: #6b7280;
+  --foreground-subtle: #6b7280; /* Medium Gray */
   
-  --accent-primary: #3b82f6;
-  --accent-secondary: #06b6d4;
+  --accent-primary: #2b9aff; /* Primary Blue */
+  --accent-secondary: #00d4ff; /* Cyan/Turquoise */
   --accent-tertiary: #8b5cf6;
   
   --success: #10b981;
   --warning: #f59e0b;
-  --error: #ef4444;
+  --error: #ff6b6b; /* Coral Red */
   
-  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(10, 22, 40, 0.6); /* Adjusted for Dark Navy */
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-hover: rgba(255, 255, 255, 0.08);
   
-  --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-  --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
-  --gradient-hero: linear-gradient(180deg, #0a0f1a 0%, #111827 50%, #0a0f1a 100%);
-  --gradient-glow: radial-gradient(circle at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+  --gradient-primary: linear-gradient(135deg, #2b9aff 0%, #00d4ff 100%);
+  --gradient-secondary: linear-gradient(135deg, #8b5cf6 0%, #2b9aff 100%);
+  --gradient-hero: linear-gradient(180deg, #0a1628 0%, #111827 50%, #0a1628 100%);
+  --gradient-glow: radial-gradient(circle at center, rgba(43, 154, 255, 0.15) 0%, transparent 70%);
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glow: 0 0 20px rgba(43, 154, 255, 0.3);
 }
 
 /* Tailwind v4 theme integration */

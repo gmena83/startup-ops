@@ -13,6 +13,7 @@ const navLinks = [
     { href: "#features", label: "nav.features" },
     { href: "#how-it-works", label: "nav.howItWorks" },
     { href: "#pricing", label: "nav.pricing" },
+    { href: "/tools/prompt-generator", label: "Prompt Gen" },
 ];
 
 export function Navbar() {

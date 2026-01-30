@@ -62,7 +62,7 @@ export function ProblemSolutionCarousel() {
     const currentItem = carouselData[currentIndex];
 
     return (
-        <section className="py-24 relative overflow-hidden">
+        <section className="py-24 relative overflow-hidden bg-[#0d121f]">
             {/* Background Gradients */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -z-10" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" />
@@ -77,73 +77,91 @@ export function ProblemSolutionCarousel() {
                     </p>
                 </div>
 
-                <div className="max-w-5xl mx-auto">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={currentIndex}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.5 }}
-                            className="grid md:grid-cols-2 gap-8 items-center"
-                        >
-                            {/* Problem Card (Left) */}
-                            <div className="relative group">
-                                <div className="absolute inset-0 bg-red-500/10 rounded-2xl blur-xl group-hover:bg-red-500/20 transition-all duration-500" />
-                                <div className="relative bg-[#111827]/80 backdrop-blur-sm border border-red-500/20 rounded-2xl p-8 h-full min-h-[300px] flex flex-col justify-center">
-                                    <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mb-6">
-                                        <currentItem.problem.icon className="w-6 h-6 text-red-500" />
+                <div className="grid lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
+
+                    {/* LEFT COLUMN: Logic Cards */}
+                    <div className="lg:col-span-5 space-y-6">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentIndex}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.4 }}
+                                className="space-y-6"
+                            >
+                                {/* P: Problem Frame */}
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-red-500/5 rounded-2xl blur-lg transition-all duration-500" />
+                                    <div className="relative bg-[#111827]/90 border border-red-500/20 rounded-2xl p-6">
+                                        <div className="flex items-center gap-4 mb-3">
+                                            <div className="p-2 bg-red-500/10 rounded-lg">
+                                                <currentItem.problem.icon className="w-5 h-5 text-red-500" />
+                                            </div>
+                                            <span className="text-sm font-bold text-red-400 tracking-wider">PROBLEM</span>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-2">
+                                            {currentItem.problem.title}
+                                        </h3>
+                                        <p className="text-gray-400 text-sm leading-relaxed">
+                                            {currentItem.problem.description}
+                                        </p>
                                     </div>
-                                    <h3 className="heading-3 text-white mb-3">
-                                        {currentItem.problem.title}
-                                    </h3>
-                                    <p className="text-gray-400 leading-relaxed">
-                                        {currentItem.problem.description}
-                                    </p>
                                 </div>
-                            </div>
 
-                            {/* Arrow Indicator (Desktop) */}
-                            <div className="hidden md:flex justify-center text-gray-600">
-                                <ArrowRight className="w-8 h-8 animate-pulse" />
-                            </div>
+                                {/* Arrow Down */}
+                                <div className="flex justify-center">
+                                    <ArrowRight className="w-6 h-6 text-gray-700 rotate-90" />
+                                </div>
 
-                            {/* Solution Card (Right) */}
-                            <div className="relative group">
-                                <div className="absolute inset-0 bg-emerald-500/10 rounded-2xl blur-xl group-hover:bg-emerald-500/20 transition-all duration-500" />
-                                <div className="relative bg-[#111827]/80 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-8 h-full min-h-[300px] flex flex-col justify-center">
-                                    <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
-                                        <currentItem.solution.icon className="w-6 h-6 text-emerald-500" />
+                                {/* S: Solution Frame */}
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-emerald-500/5 rounded-2xl blur-lg transition-all duration-500" />
+                                    <div className="relative bg-[#111827]/90 border border-emerald-500/20 rounded-2xl p-6">
+                                        <div className="flex items-center gap-4 mb-3">
+                                            <div className="p-2 bg-emerald-500/10 rounded-lg">
+                                                <currentItem.solution.icon className="w-5 h-5 text-emerald-500" />
+                                            </div>
+                                            <span className="text-sm font-bold text-emerald-400 tracking-wider">SOLUTION</span>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-2">
+                                            {currentItem.solution.title}
+                                        </h3>
+                                        <p className="text-gray-400 text-sm leading-relaxed">
+                                            {currentItem.solution.description}
+                                        </p>
                                     </div>
-                                    <h3 className="heading-3 text-white mb-3">
-                                        {currentItem.solution.title}
-                                    </h3>
-                                    <p className="text-gray-400 leading-relaxed">
-                                        {currentItem.solution.description}
-                                    </p>
                                 </div>
-                            </div>
-                        </motion.div>
-                    </AnimatePresence>
+                            </motion.div>
+                        </AnimatePresence>
 
-                    {/* Indicators */}
-                    <div className="flex justify-center gap-3 mt-12">
-                        {carouselData.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => setCurrentIndex(index)}
-                                className={cn(
-                                    "w-3 h-3 rounded-full transition-all duration-300",
-                                    index === currentIndex
-                                        ? "bg-blue-500 w-8"
-                                        : "bg-gray-700 hover:bg-gray-600"
-                                )}
-                                aria-label={`Go to slide ${index + 1}`}
-                            />
-                        ))}
+                        {/* Indicators */}
+                        <div className="flex justify-center gap-2 pt-6">
+                            {carouselData.map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setCurrentIndex(index)}
+                                    className={cn(
+                                        "h-1.5 rounded-full transition-all duration-300",
+                                        index === currentIndex
+                                            ? "bg-blue-500 w-8"
+                                            : "bg-gray-800 w-2 hover:bg-gray-700"
+                                    )}
+                                    aria-label={`Go to slide ${index + 1}`}
+                                />
+                            ))}
+                        </div>
                     </div>
+
+                    {/* RIGHT COLUMN: Visualizer */}
+                    <div className="lg:col-span-7">
+                        <ValuePropVisualizer currentIndex={currentIndex} />
+                    </div>
+
                 </div>
             </div>
         </section>
     );
 }
+
+import { ValuePropVisualizer } from "./value-prop-visualizer";

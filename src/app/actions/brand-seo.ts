@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { brandSeoInputSchema, type BrandSeoInput, type BrandSeoContext, type ModelAnalysis, type ConsensusResult } from "@/lib/schemas/brand-seo";
 import { callOpenAI, callAnthropic, callPerplexity, callGemini, callGrok, callDeepSeek, robustJSONParse } from "@/lib/ai/providers";
+import { Resend } from "resend";
+import { getBrandedEmailHtml } from "@/lib/email/templates";
 
 /**
  * Response type for the startBrandAudit action.
@@ -266,7 +268,40 @@ export async function startBrandAudit(
                 // For now, just logging to console the result
                 console.log(`[BrandSEO] Job ${jobId} Completed. Bias check:`, result.consensusCompetitors);
 
-                // TODO: Generate HTML Email and Send via Resend
+                // Generate HTML Email
+                const emailHtml = getBrandedEmailHtml({
+                    title: `Brand SEO Audit: ${context.input.companyName}`,
+                    content: `
+                        <p>Your Brand SEO Audit for <strong>${context.input.companyName}</strong> has been completed successfully.</p>
+                        <p>Our Council of Six AI agents has analyzed your brand identity and SEO positioning.</p>
+                        
+                        <h2 style="color: #0A1628; margin-top: 24px;">Key Findings</h2>
+                        <ul style="color: #4b5563;">
+                            <li><strong>Consensus Competitors:</strong> ${result.consensusCompetitors?.map((c: any) => c.name).join(", ") || "None found"}</li>
+                            <li><strong>Top Opportunity:</strong> ${result.topSeoRecommendations?.[0] || "Check report for details"}</li>
+                        </ul>
+                        
+                        <p>Please log in to your dashboard to view the full detailed report.</p>
+                    `,
+                    ctaLink: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/automations/brand-seo/${jobId}`,
+                    ctaText: "View Full Report"
+                });
+
+                // Send via Resend
+                const resendApiKey = process.env.RESEND_API_KEY;
+                if (resendApiKey) {
+                    const resend = new Resend(resendApiKey);
+                    await resend.emails.send({
+                        from: "StartupOPS <system@startupops.com>",
+                        to: [context.input.reportEmail],
+                        subject: `Your Brand SEO Audit is Ready - ${context.input.companyName}`,
+                        html: emailHtml
+                    });
+                    console.log(`[BrandSEO] Email sent to ${context.input.reportEmail}`);
+                } else {
+                    console.warn("[BrandSEO] RESEND_API_KEY missing. Email not sent.");
+                    console.log("[BrandSEO] Generated Email HTML Preview (First 500 chars):", emailHtml.substring(0, 500));
+                }
 
             } catch (err) {
                 console.error(`[BrandSEO] Job ${jobId} Failed:`, err);

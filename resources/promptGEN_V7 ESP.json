@@ -1,0 +1,1004 @@
+﻿{
+  "name": "promptGEN_V7 ESP",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "author": "Gonzalo Mena Fuenzalida",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-perplexity-ai",
+    "@activepieces/piece-claude",
+    "@activepieces/piece-openai",
+    "@activepieces/piece-google-gemini",
+    "@activepieces/piece-pdf-co",
+    "@activepieces/piece-gmail",
+    "@activepieces/piece-google-sheets",
+    "@activepieces/piece-slack"
+  ],
+  "status": "PUBLISHED",
+  "blogUrl": "",
+  "metadata": {
+    "externalId": "piVEvQtmHllFF23YrLSHO"
+  },
+  "flows": [
+    {
+      "displayName": "promptGEN_V7 ESP",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "authType": {
+              "type": "MANUAL"
+            },
+            "authFields": {
+              "type": "MANUAL",
+              "schema": {}
+            },
+            "liveMarkdown": {
+              "type": "MANUAL"
+            },
+            "syncMarkdown": {
+              "type": "MANUAL"
+            },
+            "testMarkdown": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.25",
+          "input": {
+            "authType": "none",
+            "authFields": {}
+          },
+          "sampleData": {},
+          "triggerName": "catch_webhook"
+        },
+        "nextAction": {
+          "name": "step_1",
+          "skip": false,
+          "type": "CODE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "user_request": "{{trigger}}"
+            },
+            "sampleData": {},
+            "sourceCode": {
+              "code": "export async function code({ user_request }) {\n    console.log(\"=== INICIO DE PROCESAMIENTO DE WEBHOOK V7.1 (Fixed Platform Detection) ===\");\n    console.log(\"Timestamp:\", new Date().toISOString());\n\n    let requestData;\n    try {\n        requestData = user_request;\n    } catch (e) {\n        console.error(\"❌ ERROR: Input no es un objeto válido.\", e);\n        return { error: \"Formato de input no reconocido.\", critical: true };\n    }\n    \n    // Check if body exists and extract form_response\n    const body = requestData.body || {};\n    const formResponse = body.form_response;\n\n    if (!formResponse) {\n        console.error(\"❌ ERROR: No es un formulario de Typeform válido\");\n        return { error: \"Estructura de webhook no reconocida\", critical: true };\n    }\n\n    const answers = formResponse.answers || [];\n    console.log(\"✓ Webhook de Typeform detectado\");\n\n    function getAnswerByFieldId(fieldId) {\n        const answer = answers.find(a => a.field && a.field.id === fieldId);\n        if (!answer) return null;\n        switch (answer.type) {\n            case 'choice': return answer.choice ? answer.choice.label : null;\n            case 'choices': return answer.choices ? answer.choices.labels : [];\n            case 'text': case 'long_text': return answer.text;\n            case 'email': return answer.email;\n            case 'number': return answer.number;\n            default: return null;\n        }\n    }\n    \n    // Data extraction using verified IDs\n    const typeformData = {\n        projectType: getAnswerByFieldId(\"rbE3eRmGXNot\"),    // Tipo de Proyecto\n        description: getAnswerByFieldId(\"O1ePg8f4RHMg\"),    // Details\n        keyFeatures: getAnswerByFieldId(\"8oxPWT3d1RKG\"),    // Key Features\n        constraints: getAnswerByFieldId(\"r32LJ6k9ECDM\"),    // Data Type/Constraints\n        visualStyle: getAnswerByFieldId(\"JS32YudmKm78\"),    // Visual Style\n        platform: getAnswerByFieldId(\"wa5usuCv84UT\"),       // Platform\n        aiExperience: getAnswerByFieldId(\"MVuS2Smwq6Xn\"),   // AI Experience\n        email: getAnswerByFieldId(\"aVULMdKiyiUi\"),          // Email\n        \n        targetAudience: \"General\", \n        colorPalette: null,\n        firstName: null,\n        lastName: null,\n        company: null\n    };\n    \n    // Fallback logic for Name/Company\n    if (!typeformData.firstName && typeformData.email) {\n        const emailName = typeformData.email.split('@')[0];\n        typeformData.firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);\n        typeformData.lastName = \"\"; \n        typeformData.company = \"Independent\";\n    }\n\n    function detectLanguage(text) {\n        if (!text) return 'en';\n        const spanishWords = ['el', 'la', 'de', 'que', 'y', 'un', 'una', 'necesito', 'para', 'con'];\n        const englishWords = ['the', 'a', 'of', 'that', 'and', 'an', 'i need', 'for', 'with'];\n        let spanishScore = 0;\n        let englishScore = 0;\n        const lowerText = text.toLowerCase();\n        spanishWords.forEach(word => {\n            if (lowerText.includes(` ${word} `)) spanishScore++;\n        });\n        englishWords.forEach(word => {\n            if (lowerText.includes(` ${word} `)) englishScore++;\n        });\n        return spanishScore > englishScore ? 'es' : 'en';\n    }\n\n    const detectedLanguage = detectLanguage(typeformData.description);\n    console.log(`✓ Idioma detectado: ${detectedLanguage.toUpperCase()}`);\n\n    // --- Analysis functions ---\n\n    // ✅ FIX: Improved robustness for platform detection (Case Insensitive)\n    function extractPlatformName(platform) {\n        if (!platform) return null;\n        const pLower = platform.toLowerCase();\n        \n        // Map lowercase keywords to Official Output Names\n        const m = {\n            \"perplexity\": \"Perplexity Labs\",\n            \"replit\": \"Replit.dev\",\n            \"wegic\": \"Wegic.ai\",\n            \"v0\": \"V0.dev\",\n            \"cursor\": \"Cursor.ai\",\n            \"webflow\": \"Webflow\",\n            \"midjourney\": \"Midjourney\",\n            \"dall-e\": \"DALL-E\",\n            \"gamma\": \"Gamma App\",\n            \"lovable\": \"Lovable.dev\",\n            \"manus\": \"Manus.im\",\n            \"github\": \"GitHub Copilot\",\n            \"copilot\": \"GitHub Copilot\"\n        };\n        \n        for (const [key, value] of Object.entries(m)) {\n            if (pLower.includes(key)) return value;\n        }\n        return null;\n    }\n\n    function analyzeProjectDescription(description) { if (!description) return {complexity_indicators:0,key_concepts:[],technical_depth:\"standard\",word_count:0,has_structured_content:false}; const wordCount = description.split(/\\s+/).length; const hasLists = description.includes('\\n') || description.includes(':') || description.includes('-'); let complexityIndicators = (wordCount > 100) ? 2 : (wordCount > 50) ? 1 : 0; if (description.split(/[.!?]+/).filter(s => s.trim()).length > 5) complexityIndicators++; if (hasLists) complexityIndicators++; if (/\\d+/.test(description)) complexityIndicators++; const stopWords = ['el','la','de','que','y','a','en','un','una','para','con','por','los','las','del','al']; const words = description.toLowerCase().split(/\\W+/); const significantWords = words.filter(word => word.length > 3 && !stopWords.includes(word)).reduce((acc, word) => {acc[word] = (acc[word] || 0) + 1; return acc;}, {}); const keyConcepts = Object.entries(significantWords).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 10).map(([word]) => word); const technicalTerms = ['api','database','servidor','cliente','backend','frontend','algoritmo','datos','sistema','interfaz']; const technicalCount = words.filter(word => technicalTerms.includes(word)).length; const technicalDepth = technicalCount > 5 ? \"advanced\" : technicalCount > 2 ? \"intermediate\" : \"standard\"; return {complexity_indicators:complexityIndicators,key_concepts:keyConcepts,technical_depth:technicalDepth,word_count:wordCount,has_structured_content:hasLists}; }\n    function mapProjectType(type){if(!type)return null; const m={\"Dashboard\":\"dashboard\",\"Analytics\":\"dashboard\",\"Landing\":\"landing_page\",\"Aplicación móvil\":\"mobile_app\",\"Aplicación web\":\"web_app\",\"Bot\":\"automation\",\"Contenido Interactivo\":\"interactive_content\",\"Tutorial\":\"educational\"}; for(const[k,v]of Object.entries(m)){if(type.includes(k))return v} return\"general\"}\n    function mapTargetAudience(a){if(!a)return\"general\"; const m={\"B2C\":\"consumers\",\"Consumidores\":\"consumers\",\"B2B\":\"business\",\"Empresas\":\"business\",\"Uso personal\":\"personal\",\"Público general\":\"general\"}; for(const[k,v]of Object.entries(m)){if(a.includes(k))return v} return\"general\"}\n    function mapTechnicalLevel(e){if(!e)return\"intermediate\"; if(e.includes(\"Beginner\") || e.includes(\"Principiante\"))return\"beginner\"; if(e.includes(\"Intermedio\") || e.includes(\"Intermediate\"))return\"intermediate\"; if(e.includes(\"Avanzado\") || e.includes(\"Advanced\"))return\"advanced\"; if(e.includes(\"Expert\"))return\"expert\"; return\"intermediate\"}\n    function mapSecurityLevel(c){if(!c)return\"standard\"; if(c.includes(\"Alta seguridad\") || c.includes(\"High Security\"))return\"high\"; if(c.includes(\"Baja seguridad\") || c.includes(\"Low security\"))return\"low\"; if(c.includes(\"particulares\") || c.includes(\"Customized\"))return\"custom\"; return\"standard\"}\n    function deriveTechStack(p,f,d){const t=[]; const s={\"Replit.dev\":[\"Node.js\",\"React\",\"Python\",\"Express\"],\"Webflow\":[\"No-code\",\"CMS\",\"Webflow Logic\"],\"V0.dev\":[\"Next.js\",\"React\",\"Tailwind CSS\"]}; if(s[p])t.push(...s[p]); if(f&&Array.isArray(f)){if(f.includes(\"Base de datos externas\") || f.includes(\"External Database\"))t.push(\"Database Integration\"); if(f.includes(\"Autenticación de usuarios\") || f.includes(\"User authentication\"))t.push(\"Auth System\")} if(d&&d.technical_depth===\"advanced\")t.push(\"Advanced Architecture\"); return[...new Set(t)]}\n    function calculateComplexity(d,a){let s=3; const c=d.keyFeatures?.length||0; s+=Math.min(c,5); if(a&&typeof a.complexity_indicators==='number')s+=Math.min(a.complexity_indicators,3); if([\"dashboard\",\"web_app\",\"mobile_app\"].includes(mapProjectType(d.projectType)))s++; if(mapSecurityLevel(d.constraints)===\"high\")s++; if(a&&a.technical_depth===\"advanced\")s++; s=Math.max(1,Math.min(10,s)); return{score:s,level:s<=3?\"low\":s<=6?\"medium\":s<=8?\"high\":\"expert\",estimatedHours:Math.ceil(s*3),recommendedApproach:s>7?\"comprehensive\":s>4?\"standard\":\"simplified\"}}\n    \n    const descriptionAnalysis = analyzeProjectDescription(typeformData.description);\n    const complexityAnalysis = calculateComplexity(typeformData, descriptionAnalysis);\n    \n    const standardData = {\n        platform: extractPlatformName(typeformData.platform), \n        projectType: mapProjectType(typeformData.projectType),\n        complexity: complexityAnalysis.level, \n        userName: typeformData.firstName, \n        userLastName: typeformData.lastName,\n        userCompany: typeformData.company, \n        userEmail: typeformData.email, \n        description: typeformData.description,\n        requirements: Array.isArray(typeformData.keyFeatures) ? typeformData.keyFeatures : [],\n        targetAudience: mapTargetAudience(typeformData.targetAudience), \n        securityLevel: mapSecurityLevel(typeformData.constraints),\n        technicalLevel: mapTechnicalLevel(typeformData.aiExperience),\n        additionalTools: deriveTechStack(extractPlatformName(typeformData.platform), typeformData.keyFeatures, descriptionAnalysis),\n        designPreferences: { \n            colorPalette: typeformData.colorPalette || \"Standard\", \n            visualStyle: typeformData.visualStyle || \"Standard\" \n        }\n    };\n    \n    const criticalErrors = []; \n    const warnings = [];\n    if (!standardData.platform) criticalErrors.push(\"Plataforma no detectada o no válida (Raw: \" + typeformData.platform + \")\");\n    if (!standardData.userEmail) criticalErrors.push(\"Email del usuario no proporcionado\");\n    if (!standardData.description) warnings.push(\"Descripción del proyecto no proporcionada - los prompts serán genéricos\");\n\n    if (criticalErrors.length > 0) {\n        return { error: \"Errores críticos en los datos\", critical: true, errors: criticalErrors, warnings: warnings, parsedData: standardData };\n    }\n    \n    const nodeConfigurations = {\n        perplexity_official:{search_depth:complexityAnalysis.level===\"expert\"?\"comprehensive\":\"standard\",token_allocation:complexityAnalysis.score>7?5000:4000,temperature:0.2,focus_platform:standardData.platform,include_full_description:true},\n        perplexity_community:{token_allocation:complexityAnalysis.score>7?5000:4000,temperature:0.3,project_type:standardData.projectType,key_concepts:descriptionAnalysis.key_concepts},\n        openai_consolidation:{temperature:complexityAnalysis.level===\"expert\"?0.9:0.8,max_tokens:complexityAnalysis.score>7?6000:5000,context_richness:descriptionAnalysis.word_count>100?\"high\":\"standard\"}\n    };\n    \n    return {\n        user_info: {name:standardData.userName,lastName:standardData.userLastName,company:standardData.userCompany,email:standardData.userEmail,technical_level:standardData.technicalLevel},\n        project_info: {platform:standardData.platform,type:standardData.projectType,description:standardData.description,requirements:standardData.requirements,target_audience:standardData.targetAudience,security_level:standardData.securityLevel,additional_tools:standardData.additionalTools,design_preferences:standardData.designPreferences},\n        complexity_analysis: complexityAnalysis,\n        description_analysis: descriptionAnalysis,\n        node_configurations: nodeConfigurations,\n        personalization_vars: {email_subject:`Tu Prompt Personalizado para ${standardData.platform} está Listo`,guide_title:`Guía de Implementación Avanzada para ${standardData.platform}`,pdf_filename:`${String(standardData.platform||\"Project\").replace(/\\s+/g,'_')}_Implementation_Guide`,project_context:`Proyecto de ${standardData.projectType}`},\n        workflow_metadata: {\n            processing_time_estimate:complexityAnalysis.estimatedHours*60,\n            recommended_approach:complexityAnalysis.recommendedApproach,\n            quality_threshold:complexityAnalysis.score>7?\"high\":\"standard\",\n            priority_level:\"normal\",\n            source:\"typeform_webhook_v7\",\n            warnings: warnings.length > 0 ? warnings : null,\n            detected_language: detectedLanguage\n        }\n    };\n}",
+              "packageJson": "{}"
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": true
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "auth": "{{connections['dJic7sC9QvWAHp8kER1cK']}}",
+                "model": "sonar-pro",
+                "roles": [
+                  {
+                    "role": "system",
+                    "content": "You are an expert-level Technical Researcher. Your mission is to generate a technical briefing document based *exclusively* on the official documentation of a given platform. You must be precise, factual, and ignore all third-party sources (blogs, forums, etc.). Every resource you provide must include a direct URL to its official source. Your output must be a single, valid JSON object in the language used on the input data"
+                  }
+                ],
+                "top_p": 0.9,
+                "prompt": "## Primary Task Generate a technical briefing document in the required JSON format. This document must be based *exclusively* on the OFFICIAL documentation for the specified Target Platform and tailored to the user's project. \n\n## Project Profile\n- **Target Platform**: {{step_1['project_info']['platform']}} \n- **Project Type**: {{step_1['project_info']['type']}} \n- **User's Core Goal**: {{step_1['project_info']['description']}} \n- **Key Features to Implement**: {{step_1['project_info']['requirements']}} \n- **Required Security Level**: {{step_1['project_info']['security_level']}} \n- **Output Language**: {{step_1['workflow_metadata']['detected_language']}}\n\n## Critical Research Directives \n1. **Source Prioritization**: Your #1 goal is to find direct URLs within the official documentation. Prioritize links to API references, technical guides, step-by-step tutorials, and official example projects. \n2. **Adaptive Search Logic**: \n- **IF** the Target Platform is code-centric (like Replit.dev), focus on finding APIs, SDKs, and code-based implementation patterns for the **Key Features**. \n- **ELSE IF** the Target Platform is primarily no-code/low-code (like Lovable.dev or Webflow), focus on finding official guides for advanced features, data integrations, component libraries, and custom code embedding relevant to the **User's Core Goal**. \n3. **Screenshot Description**: For each resource, provide a brief text description of a key UI element or visual cue the user should look for on that page. This serves as a text-based stand-in for a screenshot. \n4. **Actionable Content**: Do not just list features. For each resource found, explain *how* it helps implement the user's requested features. If you find official code examples, include relevant snippets. \n5. **CRITICAL: Do Not Fabricate**: It is better to return an empty string/array than to invent information. If a verifiable, relevant resource cannot be found, leave the corresponding field empty. \n\n## Required Output Format (Clean JSON without markers or annotations) { \"plataforma_analizada\": \"{{step_1.project_info.platform}}\", \"log_busqueda_adaptativa\": \"A brief, one-sentence log of the search strategy used (e.g., 'Focused on no-code data integration guides due to the platform type.')\", \"recursos_oficiales\": [ { \"titulo\": \"Name of the Resource (e.g., Guide to User API)\", \"url\": \"https://docs.platform.com/...\", \"tipo\": \"API|Documentation|Guide|Tutorial\", \"relevancia\": \"HIGH|MEDIUM|LOW\", \"resumen_aplicable\": \"This resource is HIGHLY relevant because it explains how to implement user authentication, a key requested feature.\", \"description_for_screenshot\": \"This page shows the 'Authentication' tab in the settings panel. Look for the 'Enable Google OAuth' toggle.\" } ], \"patrones_implementacion_oficiales\": [ { \"nombre\": \"Name of the Pattern (e.g., OAuth 2.0 Authentication)\", \"descripcion\": \"Description of the design or architectural pattern recommended by the platform.\", \"caso_uso_relevante\": \"Essential for implementing the secure login the user needs.\", \"ejemplo_codigo_o_pasos\": \"1. Go to Settings > API. 2. Generate a new client secret. 3. Use the provided endpoint: /oauth/token.\", \"fuente_url\": \"https://docs.platform.com/...\" } ], \"consideraciones_tecnicas_clave\": { \"seguridad_y_cumplimiento\": [ \"A key security consideration found in the official docs (e.g., 'API keys must be stored as environment variables.')\" ], \"limites_y_rendimiento\": [ \"A key performance limit from the docs (e.g., 'The free tier is limited to 1,000 API calls per day.')\" ] } }",
+                "max_tokens": "4500",
+                "temperature": "0.2",
+                "presence_penalty": 0,
+                "frequency_penalty": 1
+              },
+              "pieceName": "@activepieces/piece-perplexity-ai",
+              "actionName": "ask-ai",
+              "sampleData": {},
+              "pieceVersion": "0.2.8",
+              "propertySettings": {
+                "auth": {
+                  "type": "MANUAL"
+                },
+                "model": {
+                  "type": "MANUAL"
+                },
+                "roles": {
+                  "type": "MANUAL"
+                },
+                "top_p": {
+                  "type": "MANUAL"
+                },
+                "prompt": {
+                  "type": "MANUAL"
+                },
+                "max_tokens": {
+                  "type": "MANUAL"
+                },
+                "temperature": {
+                  "type": "MANUAL"
+                },
+                "presence_penalty": {
+                  "type": "MANUAL"
+                },
+                "frequency_penalty": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": true
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_32",
+              "skip": false,
+              "type": "CODE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "research_output": "{{step_2}}"
+                },
+                "sampleData": {},
+                "sourceCode": {
+                  "code": "export async function code({ research_output }) {\n  console.log(\"Iniciando el parseo del resultado de la investigación...\");\n\n  // 1. Validate the input from the previous step\n  if (!research_output || typeof research_output.result !== 'string' || research_output.result.trim() === '') {\n    console.error(\"La entrada 'result' está vacía o no es un string.\");\n    return { error: \"El resultado de la investigación está vacío o en un formato incorrecto.\" };\n  }\n\n  const jsonString = research_output.result;\n  let parsedData;\n\n  // 2. Safely parse the JSON string\n  try {\n    parsedData = JSON.parse(jsonString);\n  } catch (e) {\n    console.error(\"Error al parsear el JSON:\", e);\n    return { error: \"El string del resultado no es un JSON válido.\", raw_string: jsonString };\n  }\n\n  console.log(\"✅ JSON parseado exitosamente.\");\n\n  // 3. Extract and return the key pieces for the next nodes.\n  // We use '||' to provide default empty values if a key is missing.\n  return {\n    platform: parsedData.plataforma_analizada || null,\n    adaptive_log: parsedData.log_busqueda_adaptativa || \"\",\n    official_resources: parsedData.recursos_oficiales || [],\n    implementation_patterns: parsedData.patrones_implementacion_oficiales || [],\n    technical_considerations: parsedData.consideraciones_tecnicas_clave || {}\n  };\n}",
+                  "packageJson": "{}"
+                },
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": true
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_4",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "auth": "{{connections['dJic7sC9QvWAHp8kER1cK']}}",
+                    "model": "sonar-pro",
+                    "roles": [
+                      {
+                        "role": "system",
+                        "content": "You are a Principal Solutions Architect specializing in rapid prototyping. Your mission is to find practical, real-world community solutions, workarounds, and tools for a given project. You prioritize popular GitHub repositories, highly-voted Stack Overflow answers, and insightful technical blog posts over obscure or outdated content. Your output must be a single, valid JSON object."
+                      }
+                    ],
+                    "top_p": 0.9,
+                    "prompt": "## Primary Task Generate a **Community Solutions Briefing** in the required JSON format. This document must identify the most practical and well-regarded community-built examples, tools, and solutions relevant to the user's project. \n\n## Project Profile \n- **Target Platform**: {{step_1['project_info']['platform']}} \n- **User's Goal**: {{step_1['project_info']['description']}}\n- **Key Features**: {{step_1['project_info']['requirements']}} \n- **Output Language**: {{step_1['workflow_metadata']['detected_language']}}\n\n## Guiding Principles \n1. **Prioritize Quality Signals**: Search for clear indicators of community trust. For GitHub, look for stars, forks, and recent commits. For Stack Overflow or Reddit, look for upvotes and accepted answers. Mention these signals in your output.\n2. **Focus on the \"Why\"**: For every resource you find, you MUST explain *why* it is directly relevant to implementing the user's **Key Features** or achieving their **User's Goal**. \n3. **Problem-First Research**: Start by searching for common challenges, limitations, and \"gotchas\" that the community has faced with the **Target Platform**. Then, find the solutions they created. \n4. **CRITICAL: Do Not Fabricate**: It is better to return an empty string/array than to invent information. Fabricating URLs, quality metrics, or discussion titles is a failure. If a verifiable, relevant resource cannot be found, leave the corresponding field empty with an indication that no real sources could be found. \n\n## Required Output Format (Clean JSON without markers or annotations) { \"ejemplos_comunidad\": [ { \"titulo\": \"Name of the Repository or Project\", \"creador\": \"Author/Organization\", \"url\": \"https://github.com/...\", \"descripcion\": \"A concise summary of the project.\", \"relevancia_del_proyecto\": \"HIGH|MEDIUM|LOW\", \"justificacion_relevancia\": \"This project is highly relevant because it provides a pre-built template for user authentication on this platform.\", \"metricas_calidad\": \"e.g., '1.2k Stars, 250 Forks, last commit 2 weeks ago'\" } ], \"desafios_y_soluciones_comunes\": [ { \"desafio\": \"A common problem the community faces (e.g., 'Managing complex state in Lovable.dev dashboards').\", \"solucion_comunitaria\": \"The most popular solution or workaround (e.g., 'Using an external state management library and connecting it via the API module').\", \"recursos_clave\": [\"URL to a blog post or Stack Overflow answer\"] } ], \"herramientas_y_librerias_populares\": { \"librerias\": [ { \"nombre\": \"Name of the Library\", \"proposito\": \"What it's used for in the context of this project.\", \"popularidad\": \"HIGH|MEDIUM|LOW\", \"metricas_popularidad\": \"e.g., '1M weekly downloads on npm'\", \"url\": \"https://...\" } ], \"utilidades\": [ { \"nombre\": \"Name of the Utility (e.g., Lovable CLI)\", \"proposito\": \"How this tool accelerates development for this type of project.\", \"url\": \"https://...\" } ] }, \"discusiones_relevantes\": { \"stackoverflow\": [\"URL to a highly-voted Stack Overflow thread\"], \"reddit\": [\"URL to a relevant discussion on a subreddit like r/nocode\"], \"blogs_tecnicos\": [\"URL to an insightful technical blog post\"] } }",
+                    "max_tokens": "4500",
+                    "temperature": "0.4",
+                    "presence_penalty": 0,
+                    "frequency_penalty": 1
+                  },
+                  "pieceName": "@activepieces/piece-perplexity-ai",
+                  "actionName": "ask-ai",
+                  "sampleData": {},
+                  "pieceVersion": "0.2.8",
+                  "propertySettings": {
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "model": {
+                      "type": "MANUAL"
+                    },
+                    "roles": {
+                      "type": "MANUAL"
+                    },
+                    "top_p": {
+                      "type": "MANUAL"
+                    },
+                    "prompt": {
+                      "type": "MANUAL"
+                    },
+                    "max_tokens": {
+                      "type": "MANUAL"
+                    },
+                    "temperature": {
+                      "type": "MANUAL"
+                    },
+                    "presence_penalty": {
+                      "type": "MANUAL"
+                    },
+                    "frequency_penalty": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": true
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_9",
+                  "skip": false,
+                  "type": "CODE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "community_research_output": "{{step_4}}"
+                    },
+                    "sampleData": {},
+                    "sourceCode": {
+                      "code": "export async function code({ community_research_output }) {\n  console.log(\"Iniciando el parseo y limpieza del resultado de la investigación comunitaria...\");\n\n  // 1. Validate the input from the previous step\n  if (!community_research_output || typeof community_research_output.result !== 'string' || community_research_output.result.trim() === '') {\n    console.error(\"La entrada 'result' está vacía o no es un string.\");\n    return { error: \"El resultado de la investigación está vacío o en un formato incorrecto.\" };\n  }\n\n  const rawString = community_research_output.result;\n  let jsonString;\n\n  // 2. Clean the string to remove a potential Markdown wrapper (```json ... ```)\n  const jsonMatch = rawString.match(/{[\\s\\S]*}/);\n  if (jsonMatch) {\n    jsonString = jsonMatch[0];\n    console.log(\"✅ Wrapper de Markdown removido exitosamente.\");\n  } else {\n    console.error(\"No se encontró un objeto JSON válido dentro del string.\");\n    return { error: \"El string del resultado no contiene un objeto JSON válido.\", raw_string: rawString };\n  }\n\n  let parsedData;\n\n  // 3. Safely parse the cleaned JSON string\n  try {\n    parsedData = JSON.parse(jsonString);\n  } catch (e) {\n    console.error(\"Error al parsear el JSON:\", e);\n    return { error: \"El string del resultado no es un JSON válido.\", cleaned_string: jsonString };\n  }\n\n  console.log(\"✅ JSON parseado exitosamente.\");\n\n  // 4. Extract and return the key pieces for the next nodes\n  return {\n    community_examples: parsedData.ejemplos_comunidad || [],\n    common_challenges: parsedData.desafios_y_soluciones_comunes || [],\n    popular_tools: parsedData.herramientas_y_librerias_populares || {},\n    relevant_discussions: parsedData.discusiones_relevantes || {}\n  };\n}",
+                      "packageJson": "{}"
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": true
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_5",
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "auth": "{{connections['bQWH152xxXZeib1hfesWI']}}",
+                        "model": "claude-3-7-sonnet-latest",
+                        "prompt": "## Master Project Directive \nYour primary goal is to generate 3 distinct, expert-level prompts for **{{step_1.project_info.platform}}**. Each prompt must correspond to one of the expert personas defined in your system role and be based on the comprehensive project data below.\n## CONTEXT: Core Project Brief \n- **Primary Goal**: Construct a **{{step_1['project_info']['type']}}**. \n- **User's Core Vision**: \"{{step_1['project_info']['description']}}\" \n- **Critical Features**: {{step_1['project_info']['requirements']}} \n- **Target Audience**: {{step_1['project_info']['target_audience']}} \n- **Design Preferences**: {{step_1['project_info']['design_preferences']}} \n- **Output Language**: {{step_1['workflow_metadata']['detected_language']}}\n\n## CONTEXT: Technical & Community Research \n- **Official Implementation Patterns**: {{step_32['implementation_patterns']}} \n- **Key Technical Considerations (from official docs)**: {{step_32['technical_considerations']}} \n- **Popular Community Tools & Libraries**: {{step_9['popular_tools']}} \n- **Common Community Challenges & Solutions**: {{step_9['common_challenges']}} \n- **Relevant Community Examples**: {{step_9['community_examples']}} \n\n## TASK: Generate Three Persona-Based Prompts \n### 1. Senior Software Engineer Prompt \n- **Focus**: Technical feasibility, architecture, code structure, and implementation details. \n- **Key Data Inputs**: Pay close attention to the **Official Implementation Patterns**, **Key Technical Considerations**, and **Popular Community Tools & Libraries**. \n- **Prompt Goal**: Your generated prompt should be designed to produce a detailed technical specification, architectural diagram, or foundational codebase for the project on **{{step_1.project_info.platform}}**. It must address the **Common Community Challenges** found in the research. \n### 2. Product Manager Prompt \n- **Focus**: User value, feature prioritization, strategic goals, and market positioning. \n- **Key Data Inputs**: Pay close attention to the **User's Core Vision**, **Critical Features**, **Target Audience**, and **Relevant Community Examples** (as market research). \n- **Prompt Goal**: Your generated prompt should be designed to produce a product requirements document (PRD), a set of user stories, or a strategic feature roadmap. It must clearly define the \"what\" and \"why\" of the project. \n### 3. UI/UX Designer Prompt \n- **Focus**: User experience, interface layout, visual identity, and interaction design. \n- **Key Data Inputs**: Pay close attention to the **Design Preferences**, **Target Audience**, **User's Core Vision**, and the visual aspects of the **Relevant Community Examples**. \n- **Prompt Goal**: Your generated prompt should be designed to produce a detailed UI description, a style guide, a component library breakdown, or user flow descriptions that align with the user's aesthetic preferences. \n\n## REQUIRED OUTPUT FORMAT Output ONLY the three prompts. Use these exact Markdown headings to separate them: \n## Senior Software Engineer Prompt (Your generated prompt here) \n## Product Manager Prompt (Your generated prompt here) \n## UI/UX Designer Prompt (Your generated prompt here)",
+                        "maxTokens": "5500",
+                        "temperature": "0.7",
+                        "systemPrompt": "You are an elite Prompt Engineering consortium, embodying three distinct expert personas: a Senior Software Engineer, a strategic Product Manager, and a technical UI/UX Designer. Your collective mission is to generate three distinct, hyper-specific, and immediately actionable prompts in English for the specified target platform. Each prompt must be a masterpiece of clarity, incorporating all available context to produce a superior result.",
+                        "thinkingMode": true,
+                        "thinkingModeParams": {
+                          "budgetTokens": "2500"
+                        }
+                      },
+                      "pieceName": "@activepieces/piece-claude",
+                      "actionName": "ask_claude",
+                      "sampleData": {},
+                      "pieceVersion": "0.2.1",
+                      "propertySettings": {
+                        "auth": {
+                          "type": "MANUAL"
+                        },
+                        "model": {
+                          "type": "MANUAL"
+                        },
+                        "prompt": {
+                          "type": "MANUAL"
+                        },
+                        "systemPrompt": {
+                          "type": "MANUAL"
+                        },
+                        "thinkingMode": {
+                          "type": "MANUAL"
+                        },
+                        "thinkingModeParams": {
+                          "type": "MANUAL",
+                          "schema": {
+                            "budgetTokens": {
+                              "type": "NUMBER",
+                              "required": true,
+                              "description": "This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.",
+                              "displayName": "Budget Tokens",
+                              "defaultValue": 1024
+                            }
+                          }
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": true
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "nextAction": {
+                      "name": "step_6",
+                      "skip": false,
+                      "type": "CODE",
+                      "valid": true,
+                      "settings": {
+                        "input": {
+                          "raw_prompts_text": "{{step_5}}"
+                        },
+                        "sampleData": {},
+                        "sourceCode": {
+                          "code": "export async function code({ raw_prompts_text }) {\n  console.log(\"Iniciando el parseo de las variantes de prompt...\");\n\n  // Handles both object and raw string inputs from the previous step.\n  const inputText = typeof raw_prompts_text === 'object' && raw_prompts_text !== null\n    ? raw_prompts_text.response || JSON.stringify(raw_prompts_text)\n    : raw_prompts_text || '';\n\n  if (typeof inputText !== 'string' || inputText.trim() === '') {\n    console.error(\"El texto de los prompts está vacío o no es un string.\");\n    return { error: \"El texto de los prompts está vacío o en formato incorrecto.\" };\n  }\n\n  // Helper function to extract content between headings\n  const extractPrompt = (startPattern, text) => {\n    const match = text.match(startPattern);\n    if (!match) {\n      console.warn(`No se encontró coincidencia para el patrón: ${startPattern}`);\n      return null;\n    }\n    const startIndex = match.index + match[0].length;\n    let endIndex = text.length;\n    \n    // Find the next heading to define the end of the current section\n    const nextHeaderMatch = text.substring(startIndex).match(/^## /m);\n    if (nextHeaderMatch) {\n      endIndex = startIndex + nextHeaderMatch.index;\n    }\n    return text.substring(startIndex, endIndex).trim();\n  };\n\n  // Define the patterns for each persona's prompt heading\n  const devPattern = /^## Senior Software Engineer Prompt/im;\n  const pmPattern = /^## Product Manager Prompt/im;\n  const designerPattern = /^## UI\\/UX Designer Prompt/im;\n\n  const developer_prompt = extractPrompt(devPattern, inputText);\n  const product_manager_prompt = extractPrompt(pmPattern, inputText);\n  const designer_prompt = extractPrompt(designerPattern, inputText);\n\n  // Validate that all prompts were successfully extracted\n  if (!developer_prompt || !product_manager_prompt || !designer_prompt) {\n    const missing = [\n        !developer_prompt ? \"Engineer\" : null,\n        !product_manager_prompt ? \"Product Manager\" : null,\n        !designer_prompt ? \"Designer\" : null\n    ].filter(Boolean).join(', ');\n    return { \n      error: `No se pudieron encontrar todos los prompts. Faltan: ${missing}`, \n      status: \"error\",\n      raw_input: inputText // Return the input for debugging\n    };\n  }\n\n  console.log(\"✅ Prompts de Engineer, PM, y Designer extraídos exitosamente.\");\n\n  return {\n    developer_prompt: developer_prompt,\n    product_manager_prompt: product_manager_prompt,\n    designer_prompt: designer_prompt\n  };\n}",
+                          "packageJson": "{}"
+                        },
+                        "errorHandlingOptions": {
+                          "retryOnFailure": {
+                            "value": true
+                          },
+                          "continueOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "name": "step_3",
+                        "skip": false,
+                        "type": "PIECE",
+                        "valid": true,
+                        "settings": {
+                          "input": {
+                            "auth": "{{connections['HRSnRdbU15DnXlhDmUKqW']}}",
+                            "topP": 1,
+                            "model": "gpt-4o",
+                            "roles": [
+                              {
+                                "role": "system",
+                                "content": "You are a Chief Prompt Officer, an expert in synthesizing multiple professional perspectives into a single, comprehensive master prompt. You excel at creating actionable, platform-specific instructions that are greater than the sum of their parts."
+                              }
+                            ],
+                            "prompt": "Your task is to synthesize the three distinct and validated persona prompts below into a single, cohesive **master prompt** for **{{step_1.project_info.platform}}**. \n## Core Project Context \n- **Goal**: Build a **{{step_1['project_info']['type']}}**. \n- **Vision**: \"{{step_1['project_info']['description']}}\" \n- **Key Features**: {{step_1['project_info']['requirements']}} \n- **Output Language**: {{step_1['workflow_metadata']['detected_language']}}\n\n## Validated Persona Prompts \n### Engineer's Perspective {{step_6['developer_prompt']}} \n### Product Manager's Perspective {{step_6['product_manager_prompt']}} \n### Designer's Perspective {{step_6['designer_prompt']}} \n\n## Master Prompt Structure Organize the final, synthesized prompt using the following framework. Combine the best and most relevant instructions from all three personas under each heading. \n### 1. Primary Objective & Strategic Context (Synthesize the PM's \"why\" and the user's core vision.) \n### 2. Technical Architecture & Implementation Plan (Synthesize the Engineer's technical specs, libraries, and architecture.) \n### 3. Core Feature Requirements & User Stories (Synthesize the PM's feature roadmap/user stories with the Engineer's implementation details for each feature.) \n### 4. User Experience & Interface Design (Synthesize the Designer's style guide, wireframes, and interaction patterns.) \n### 5. Success Metrics & Deliverables (Synthesize the PM's KPIs and define the final expected output.) The final output must be a single, unified prompt ready for immediate use. \n\nDo not include any of your own commentary, only the master prompt itself.",
+                            "maxTokens": "3500",
+                            "temperature": "0.5",
+                            "presencePenalty": "0.2",
+                            "frequencyPenalty": 0
+                          },
+                          "pieceName": "@activepieces/piece-openai",
+                          "actionName": "ask_chatgpt",
+                          "sampleData": {},
+                          "pieceVersion": "0.5.5",
+                          "propertySettings": {
+                            "auth": {
+                              "type": "MANUAL"
+                            },
+                            "topP": {
+                              "type": "MANUAL"
+                            },
+                            "model": {
+                              "type": "MANUAL"
+                            },
+                            "roles": {
+                              "type": "MANUAL"
+                            },
+                            "prompt": {
+                              "type": "MANUAL"
+                            },
+                            "maxTokens": {
+                              "type": "MANUAL"
+                            },
+                            "temperature": {
+                              "type": "MANUAL"
+                            },
+                            "presencePenalty": {
+                              "type": "MANUAL"
+                            },
+                            "frequencyPenalty": {
+                              "type": "MANUAL"
+                            }
+                          },
+                          "errorHandlingOptions": {
+                            "retryOnFailure": {
+                              "value": true
+                            },
+                            "continueOnFailure": {
+                              "value": false
+                            }
+                          }
+                        },
+                        "nextAction": {
+                          "name": "step_22",
+                          "skip": false,
+                          "type": "CODE",
+                          "valid": true,
+                          "settings": {
+                            "input": {
+                              "mega_prompt_text": "{{step_3}}"
+                            },
+                            "sampleData": {},
+                            "sourceCode": {
+                              "code": "export async function code({ mega_prompt_text }) {\n  console.log(\"Iniciando el parseo del Mega Prompt final...\");\n\n  // Handle both object and raw string inputs for robustness\n  const inputText = typeof mega_prompt_text === 'object' && mega_prompt_text !== null\n    ? mega_prompt_text.response || JSON.stringify(mega_prompt_text)\n    : mega_prompt_text || '';\n\n  if (typeof inputText !== 'string' || inputText.trim() === '') {\n    console.error(\"El texto del mega prompt está vacío o no es un string.\");\n    return { error: \"El texto del mega prompt está vacío o en formato incorrecto.\" };\n  }\n\n  // Helper function to extract content between specific headings\n  const extractSection = (startPattern, text) => {\n    const match = text.match(startPattern);\n    if (!match) return null;\n\n    const startIndex = match.index + match[0].length;\n    let endIndex = text.length;\n\n    // Find the next section heading (### followed by a number and a dot) to define the end\n    const nextHeaderMatch = text.substring(startIndex).match(/^### \\d\\./m);\n    if (nextHeaderMatch) {\n      endIndex = startIndex + nextHeaderMatch.index;\n    }\n    return text.substring(startIndex, endIndex).trim();\n  };\n\n  // Define regex patterns for each of the five section headings\n  const objectivePattern = /^### 1\\. Primary Objective & Strategic Context/im;\n  const architecturePattern = /^### 2\\. Technical Architecture & Implementation Plan/im;\n  const featuresPattern = /^### 3\\. Core Feature Requirements & User Stories/im;\n  const uxPattern = /^### 4\\. User Experience & Interface Design/im;\n  const metricsPattern = /^### 5\\. Success Metrics & Deliverables/im;\n\n  const objective = extractSection(objectivePattern, inputText);\n  const architecture = extractSection(architecturePattern, inputText);\n  const features = extractSection(featuresPattern, inputText);\n  const ux_design = extractSection(uxPattern, inputText);\n  const metrics = extractSection(metricsPattern, inputText);\n  \n  // Validate that all sections were successfully parsed\n  if (!objective || !architecture || !features || !ux_design || !metrics) {\n      const missing = [\n          !objective ? \"Objective\" : null,\n          !architecture ? \"Architecture\" : null,\n          !features ? \"Features\" : null,\n          !ux_design ? \"UX/UI\" : null,\n          !metrics ? \"Metrics\" : null\n      ].filter(Boolean).join(', ');\n      return { \n        error: `No se pudieron parsear todas las secciones del mega prompt. Faltan: ${missing}`, \n        status: \"error\" \n      };\n  }\n\n  console.log(\"✅ Mega Prompt parseado exitosamente en sus componentes.\");\n\n  return {\n    full_mega_prompt: inputText,\n    sections: {\n      objective: objective,\n      architecture: architecture,\n      features: features,\n      ux_design: ux_design,\n      metrics: metrics\n    }\n  };\n}",
+                              "packageJson": "{}"
+                            },
+                            "errorHandlingOptions": {
+                              "retryOnFailure": {
+                                "value": true
+                              },
+                              "continueOnFailure": {
+                                "value": false
+                              }
+                            }
+                          },
+                          "nextAction": {
+                            "name": "step_8",
+                            "type": "PIECE",
+                            "valid": true,
+                            "settings": {
+                              "input": {
+                                "auth": "{{connections['bQWH152xxXZeib1hfesWI']}}",
+                                "model": "claude-3-7-sonnet-latest",
+                                "prompt": "## PRIMARY TASK Create a detailed, personalized 'Implementation Manual' for the user based on the final mega-prompt and all the context provided. \n## CRITICAL DIRECTIVE: PERSONALIZE THE TONE You MUST adapt the tone, examples, and technical depth of your explanations throughout the entire manual based on the **User's AI Expertise Level: \"{{step_1['user_info']['technical_level']}}\"**. \n- For **'beginner'**: Use simple, encouraging, step-by-step language. Avoid jargon. Assume no prior knowledge. \n- For **'intermediate'**: Use clear language but feel free to include common technical terms. Focus on best practices. \n- For **'expert'**: Be direct, concise, and technical. Focus on advanced strategies and optimization. \n\n## CONTEXT FOR THE MANUAL ### User & Project Context \n- **User's Name**: {{step_1['user_info']['name']}} \n- **User's AI Expertise Level**: {{step_1['user_info']['technical_level']}} \n- **Target Platform**: {{step_1['project_info']['platform']}} \n- **Project Type**: {{step_1['project_info']['type']}} \n- **Output Language**: {{step_1['workflow_metadata']['detected_language']}}\n\n### The Final Mega-Prompt {{step_22['full_mega_prompt']}} \n### Key Research Findings \n- **Common Community Challenges**: {{step_9['common_challenges']}} \n- **Key Technical Considerations (from Official Docs)**: {{step_32['technical_considerations']}} \n\n## REQUIRED MANUAL STRUCTURE Generate the manual using these exact headings and follow the instructions for each section. \n### 1. Your Personalized Implementation Guide is Ready! (Write a warm, personalized introduction for {{step_1.user_info.name}}. Mention their {{step_1.project_info.type}} project on the {{step_1.project_info.platform}} and explain that this guide will help them get the most out of their custom-built mega-prompt.) \n### 2. The Mega-Prompt: Your Detailed Project Blueprint (Present the complete mega-prompt here inside a code block. Briefly explain that this prompt consolidates the perspectives of an engineer, a product manager, and a designer to create a comprehensive action plan.) \n### 3. How to Use This Prompt in {{step_1.project_info.platform}} (Provide clear, numbered, step-by-step instructions on how to use the prompt. Explain where to paste it in the platform's UI. Give a specific, hypothetical example of a first interaction. Remember to tailor the complexity of this section to the user's expertise level.) \n### 4. What to Expect & How to Iterate (Explain that the AI's first output is a starting point. Give the user 2-3 specific examples of follow-up prompts they could use to refine the results. For example: \"The initial design is good, but make the color palette warmer,\" or \"Generate the Python code for the API integration part.\") \n### 5. Platform-Specific Tips & Gotchas for {{step_1.project_info.platform}} (Using the **Key Research Findings** provided in the context, extract 2-3 of the most critical challenges or considerations. Present them as friendly \"Quick Tips\" or \"Heads-Up!\" alerts. For example: \"Heads-Up: Remember that free tier plans may have restrictions on monthly API calls, which is a key consideration for your app.\") \n### 6. Recommended Next Steps (Based on the project, suggest 2-3 concrete, actionable next steps the user should take *after* getting a good result from the mega-prompt. For example: \"1. Start building the UI components in a separate file,\" or \"2. Set up a new database to store user data.\")",
+                                "maxTokens": "5000",
+                                "temperature": "0.6",
+                                "systemPrompt": "You are 'Alex', an expert AI Implementation Strategist and technical writer. Your mission is to create a clear, comprehensive, and user-friendly assistance manual based on a complex, AI-generated \"mega-prompt\". You must write in a helpful, encouraging, and professional tone in the language used by the the user on their request. The manual should not just present the prompt, but explain its structure, how to use it effectively on the target platform, and provide valuable strategic insights based on the provided research.",
+                                "thinkingMode": true,
+                                "thinkingModeParams": {
+                                  "budgetTokens": "2000"
+                                }
+                              },
+                              "pieceName": "@activepieces/piece-claude",
+                              "actionName": "ask_claude",
+                              "sampleData": {},
+                              "pieceVersion": "0.2.1",
+                              "propertySettings": {
+                                "auth": {
+                                  "type": "MANUAL"
+                                },
+                                "model": {
+                                  "type": "MANUAL"
+                                },
+                                "prompt": {
+                                  "type": "MANUAL"
+                                },
+                                "maxTokens": {
+                                  "type": "MANUAL"
+                                },
+                                "temperature": {
+                                  "type": "MANUAL"
+                                },
+                                "systemPrompt": {
+                                  "type": "MANUAL"
+                                },
+                                "thinkingMode": {
+                                  "type": "MANUAL"
+                                },
+                                "thinkingModeParams": {
+                                  "type": "MANUAL",
+                                  "schema": {
+                                    "budgetTokens": {
+                                      "type": "NUMBER",
+                                      "required": true,
+                                      "description": "This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.",
+                                      "displayName": "Budget Tokens",
+                                      "defaultValue": 1024
+                                    }
+                                  }
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": true
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "nextAction": {
+                              "name": "step_21",
+                              "skip": false,
+                              "type": "PIECE",
+                              "valid": true,
+                              "settings": {
+                                "input": {
+                                  "auth": "{{connections['7UyEOcBImqZK15GkB3YUF']}}",
+                                  "model": "gemini-2.5-pro",
+                                  "prompt": "## PRIMARY TASK You are an expert HTML formatter. Your task is to take a pre-written block of text (the content for a user manual) and correctly insert its sections into the provided HTML Template. You must use the existing HTML tags and CSS classes from the template to structure the content. \n\n## CRITICAL INSTRUCTIONS \n1. Your final output must be **only the complete, raw HTML code**. \n2. Do not add any explanations, preambles, or markdown formatting like ` ```html ` around your response. \n3. Use the CSS classes and HTML tags exactly as described in the template and its comments.\n## CONTEXT \n### Manual Content to Format {{step_8}} \n### The Mega-Prompt {{step_22['full_mega_prompt']}} \n- **Output Language**: {{step_1['workflow_metadata']['detected_language']}}\n\n## HTML TEMPLATE WITH INSTRUCTIONS \n<!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <title>Your Implementation Guide</title> <style> /* --- General Styles --- */ @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } } body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; background-color: #f8f9fa; margin: 0; padding: 0; } .container { max-width: 8.5in; margin: 25px auto; padding: 40px; background-color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px; } /* --- Print & Page Break Control --- */ h1, h2, h3 { page-break-after: avoid; } p, ul, .highlight-box, .tip-box { page-break-inside: avoid; } pre { white-space: pre-wrap; word-wrap: break-word; } /* --- Typography & Headers --- */ h1 { font-size: 32px; font-weight: bold; color: white; padding: 20px; border-radius: 8px; text-align: center; background: linear-gradient(135deg, #005c97, #363795); margin-bottom: 40px; } h2 { font-size: 24px; font-weight: bold; color: #1e3a8a; border-bottom: 3px solid; padding-bottom: 10px; margin-top: 45px; border-image: linear-gradient(to right, #3b82f6, #9333ea) 1; } /* --- Custom Content Boxes --- */ .highlight-box { background-color: #eef2ff; border-left: 5px solid #6366f1; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0; font-style: italic; } .tip-box { background-color: #fefce8; border-left: 5px solid #facc15; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0; } .bold-highlight { font-weight: bold; color: #1e3a8a; } /* --- Code Block for the Mega-Prompt --- */ pre { background-color: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; border: 1px solid #334155; font-family: 'Courier New', monospace; font-size: 14px; } /* --- Footer --- */ footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #777; } </style> </head> <body> <div class=\"container\"> </div> </body> </html>"
+                                },
+                                "pieceName": "@activepieces/piece-google-gemini",
+                                "actionName": "chat_gemini",
+                                "sampleData": {},
+                                "pieceVersion": "0.0.23",
+                                "propertySettings": {
+                                  "auth": {
+                                    "type": "MANUAL"
+                                  },
+                                  "model": {
+                                    "type": "MANUAL"
+                                  },
+                                  "prompt": {
+                                    "type": "MANUAL"
+                                  }
+                                },
+                                "errorHandlingOptions": {
+                                  "retryOnFailure": {
+                                    "value": true
+                                  },
+                                  "continueOnFailure": {
+                                    "value": false
+                                  }
+                                }
+                              },
+                              "nextAction": {
+                                "name": "step_13",
+                                "skip": false,
+                                "type": "CODE",
+                                "valid": true,
+                                "settings": {
+                                  "input": {
+                                    "raw_html_output": "{{step_21}}"
+                                  },
+                                  "sampleData": {},
+                                  "sourceCode": {
+                                    "code": "export async function code({ raw_html_output }) {\n  console.log(\"Iniciando limpieza y corrección de HTML...\");\n\n  // 1. Extract the string from the input object.\n  let htmlString = typeof raw_html_output === 'object' && raw_html_output !== null\n    ? raw_html_output.response || ''\n    : raw_html_output || '';\n\n  if (typeof htmlString !== 'string' || htmlString.trim() === '') {\n    console.warn(\"La entrada para la limpieza de HTML está vacía.\");\n    return { cleaned_html: \"\" };\n  }\n\n  // 2. Remove any leading/trailing markdown fences (e.g., ```html).\n  htmlString = htmlString.replace(/^```html\\n/, '').replace(/\\n```$/, '');\n\n  // 3. ✅ FIX: Correct the malformed markdown links inside href attributes.\n  // This regex finds href=\"[URL](URL)\" and replaces it with href=\"URL\".\n  const linkRegex = /href=\"\\[(https?:\\/\\/[^\\]]+)\\]\\([^)]+\\)\"/g;\n  htmlString = htmlString.replace(linkRegex, 'href=\"$1\"');\n\n  // 4. Trim any final whitespace.\n  const cleanedHtml = htmlString.trim();\n  \n  console.log(\"✅ Limpieza y corrección de HTML completada exitosamente.\");\n\n  return {\n    cleaned_html: cleanedHtml\n  };\n}",
+                                    "packageJson": "{}"
+                                  },
+                                  "errorHandlingOptions": {
+                                    "retryOnFailure": {
+                                      "value": true
+                                    },
+                                    "continueOnFailure": {
+                                      "value": false
+                                    }
+                                  }
+                                },
+                                "nextAction": {
+                                  "name": "step_12",
+                                  "skip": false,
+                                  "type": "PIECE",
+                                  "valid": true,
+                                  "settings": {
+                                    "input": {
+                                      "auth": "{{connections['LDbbwG2U6G4wEftStQmfe']}}",
+                                      "html": "{{step_13['cleaned_html']}}",
+                                      "name": "{{step_1['personalization_vars']['guide_title']}}.pdf",
+                                      "footer": "<div style=\"font-family: 'Segoe UI', sans-serif; font-size: 10px; color: #777; text-align: center; width: 100%;\"> Generated by Menatech AI Systems | https://menatech.cloud </div>",
+                                      "margins": "15mm 15mm 15mm 15mm",
+                                      "paperSize": "A4",
+                                      "printBackground": true,
+                                      "doNotWaitFullLoad": false
+                                    },
+                                    "pieceName": "@activepieces/piece-pdf-co",
+                                    "actionName": "convert_html_to_pdf",
+                                    "sampleData": {},
+                                    "pieceVersion": "0.0.8",
+                                    "propertySettings": {
+                                      "auth": {
+                                        "type": "MANUAL"
+                                      },
+                                      "html": {
+                                        "type": "MANUAL"
+                                      },
+                                      "name": {
+                                        "type": "MANUAL"
+                                      },
+                                      "footer": {
+                                        "type": "MANUAL"
+                                      },
+                                      "header": {
+                                        "type": "MANUAL"
+                                      },
+                                      "margins": {
+                                        "type": "MANUAL"
+                                      },
+                                      "paperSize": {
+                                        "type": "MANUAL"
+                                      },
+                                      "printBackground": {
+                                        "type": "MANUAL"
+                                      },
+                                      "doNotWaitFullLoad": {
+                                        "type": "MANUAL"
+                                      }
+                                    },
+                                    "errorHandlingOptions": {
+                                      "retryOnFailure": {
+                                        "value": true
+                                      },
+                                      "continueOnFailure": {
+                                        "value": false
+                                      }
+                                    }
+                                  },
+                                  "nextAction": {
+                                    "name": "step_7",
+                                    "skip": false,
+                                    "type": "PIECE",
+                                    "valid": true,
+                                    "settings": {
+                                      "input": {
+                                        "auth": "{{connections['7UyEOcBImqZK15GkB3YUF']}}",
+                                        "model": "gemini-2.0-flash",
+                                        "prompt": "## PRIMARY TASK You are an expert content localizer. Your task is to translate the user-facing text content *within* the provided HTML block to the specified language. ## CRITICAL INSTRUCTIONS 1. Your final output must be **only the complete, raw HTML code**. Do not add any explanations or markdown formatting. 2. You MUST translate all text content to the language specified in the context, EXCEPT for the content inside the `<pre>` tag. 3. **DO NOT change the HTML structure, tags, or CSS styles in any way.** Only modify the text content. --- ## CONTEXT - **Translate to Language**: {{step_1.workflow_metadata.detected_language}} - **User Name**: {{step_1.user_info.name}} --- ## HTML CONTENT TO TRANSLATE <!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Your Custom AI Project Blueprint</title> </head> <body style=\"margin: 0; padding: 0; background-color: #121212; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\"> <table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color: #121212;\"> <tr> <td align=\"center\"> <table width=\"600\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width: 600px; margin: 20px auto; background-color: #1E1E1E; border-radius: 8px; overflow: hidden; border: 1px solid #333;\"> <tr> <td align=\"center\" style=\"background: linear-gradient(135deg, #005c97, #363795); padding: 30px 20px;\"> <h1 style=\"color: #ffffff; font-size: 28px; margin: 0; font-weight: bold;\">Your AI Project Blueprint is Ready</h1> <p style=\"color: #e0e0e0; font-size: 16px; margin: 5px 0 0 0;\">Custom-built for your {{step_1.project_info.type}} on {{step_1.project_info.platform}}</p> </td> </tr> <tr> <td style=\"padding: 30px 30px 20px 30px; color: #E0E0E0; font-size: 16px; line-height: 1.6;\"> <p>Hi {{step_1.user_info.name}},</p> <p>Your request has been processed. Our system analyzed your requirements, synthesized expert perspectives, and generated a **custom mega-prompt and implementation guide**, which you'll find attached as a PDF.</p> <p>Below are some key insights and metrics our system generated during this process.</p> </td> </tr> <tr> <td style=\"padding: 0 30px;\"> <table width=\"100%\" style=\"background-color: #2a2a2a; border-radius: 8px; padding: 20px; border: 1px solid #444;\"> <tr> <td> <h3 style=\"color: #3b82f6; margin: 0 0 15px 0;\">Project Analysis & Key Insights</h3> <p style=\"margin: 5px 0; color: #ccc;\"><strong>Platform:</strong> <span style=\"color: #fff;\">{{step_1.project_info.platform}}</span></p> <p style=\"margin: 5px 0; color: #ccc;\"><strong>Calculated Complexity:</strong> <span style=\"color: #fff;\">{{step_1.complexity_analysis.level}} ({{step_1.complexity_analysis.score}}/10)</span></p> <p style=\"margin: 5px 0; color: #ccc;\"><strong>Top Community-Recommended Tool:</strong> <span style=\"color: #fff;\">{{step_9.popular_tools.librerias[0].nombre}} ({{step_9.popular_tools.librerias[0].metricas_popularidad}})</span></p> <p style=\"margin: 5px 0; color: #ccc;\"><strong>Key Technical Insight:</strong> <span style=\"color: #fff;\">{{step_32.technical_considerations.limites_y_rendimiento[0]}}</span></p> </td> </tr> </table> </td> </tr> <tr> <td style=\"padding: 30px;\"> <h3 style=\"color: #3b82f6; margin: 0 0 10px 0;\">✨ Your Mega-Prompt (Preview)</h3> <p style=\"color: #aaa; margin: 0 0 15px 0;\">Here's a preview of the primary objective from the full mega-prompt included in your guide:</p> <div style=\"background-color: #1a1a1a; color: #e2e8f0; padding: 15px; border-radius: 8px; border-left: 4px solid #6366f1;\"> <pre style=\"white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: 'Courier New', monospace; font-size: 14px; max-height: 200px; overflow: hidden; color: #e2e8f0;\">{{step_22.sections.objective}}</pre> </div> <p style=\"color: #6366f1; font-size: 14px; margin: 10px 0 0 0; text-align: center;\">The complete prompt and step-by-step guide are in the attached PDF.</p> </td> </tr> <tr> <td align=\"center\" style=\"padding: 10px 30px 30px 30px;\"> <h3 style=\"color: #3b82f6; margin-top: 0;\">Ready to take the next step?</h3> <p style=\"color: #aaa; margin: 10px 0 20px 0;\">If you need help with implementation or want to explore more advanced AI solutions, our team is here to help.</p> <a href=\"[https://app.usemotion.com/meet/gonzalo-mena-fuenzalida/menatech](https://app.usemotion.com/meet/gonzalo-mena-fuenzalida/menatech)\" style=\"background: linear-gradient(120deg, #3b82f6, #6366f1); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;\">Schedule a Consultation</a> </td> </tr> <tr> <td style=\"padding: 20px 30px; text-align: center; border-top: 1px solid #333; background-color: #2a2a2a;\"> <p style=\"color: #777777; font-size: 12px; margin: 0;\">Generated by Menatech AI Systems</p> <p style=\"color: #777777; font-size: 12px; margin: 5px 0 0 0;\">© 2025 Menatech | <a href=\"[https://menatech.cloud]\" style=\"color: #005c97;\">Menatech</a></p> </td> </tr> </table> </td> </tr> </table> </body> </html>"
+                                      },
+                                      "pieceName": "@activepieces/piece-google-gemini",
+                                      "actionName": "chat_gemini",
+                                      "sampleData": {},
+                                      "pieceVersion": "0.0.23",
+                                      "propertySettings": {
+                                        "auth": {
+                                          "type": "MANUAL"
+                                        },
+                                        "model": {
+                                          "type": "MANUAL"
+                                        },
+                                        "prompt": {
+                                          "type": "MANUAL"
+                                        },
+                                        "memoryKey": {
+                                          "type": "MANUAL"
+                                        }
+                                      },
+                                      "errorHandlingOptions": {
+                                        "retryOnFailure": {
+                                          "value": true
+                                        },
+                                        "continueOnFailure": {
+                                          "value": false
+                                        }
+                                      }
+                                    },
+                                    "nextAction": {
+                                      "name": "step_10",
+                                      "skip": false,
+                                      "type": "CODE",
+                                      "valid": true,
+                                      "settings": {
+                                        "input": {
+                                          "raw_html_output": "{{step_7['response']}}"
+                                        },
+                                        "sampleData": {},
+                                        "sourceCode": {
+                                          "code": "export async function code({ raw_html_output }) {\n  console.log(\"Iniciando limpieza y corrección final del HTML del email...\");\n\n  // 1. Extract the string from the input object.\n  let htmlString = typeof raw_html_output === 'object' && raw_html_output !== null\n    ? raw_html_output.response || ''\n    : raw_html_output || '';\n\n  if (typeof htmlString !== 'string' || htmlString.trim() === '') {\n    console.warn(\"La entrada para la limpieza de HTML está vacía.\");\n    return { cleaned_html: \"\" };\n  }\n\n  // 2. Remove any leading/trailing markdown fences (e.g., ```html).\n  htmlString = htmlString.replace(/^```html\\s*/, '').replace(/\\s*```$/, '');\n\n  // 3. FIX: Correct the malformed markdown links inside href attributes.\n  // This regex is robust enough to handle both [URL](URL) and [URL] formats.\n  const linkRegex = /href=\"\\[(https?:\\/\\/[^\\]]+)\\](?:\\([^)]+\\))?\"/g;\n  htmlString = htmlString.replace(linkRegex, 'href=\"$1\"');\n\n  // 4. Trim any final whitespace.\n  const cleanedHtml = htmlString.trim();\n\n  console.log(\"✅ Limpieza y corrección de HTML completada exitosamente.\");\n\n  return {\n    cleaned_html: cleanedHtml\n  };\n}",
+                                          "packageJson": "{}"
+                                        },
+                                        "errorHandlingOptions": {
+                                          "retryOnFailure": {
+                                            "value": true
+                                          },
+                                          "continueOnFailure": {
+                                            "value": false
+                                          }
+                                        }
+                                      },
+                                      "nextAction": {
+                                        "name": "step_11",
+                                        "skip": false,
+                                        "type": "PIECE",
+                                        "valid": true,
+                                        "settings": {
+                                          "input": {
+                                            "cc": [],
+                                            "bcc": [
+                                              "gonzalo@menatech.cloud"
+                                            ],
+                                            "auth": "{{connections['5fzRIc3J1ulrSw0AhXhRW']}}",
+                                            "body": "{{step_10['cleaned_html']}}",
+                                            "draft": false,
+                                            "subject": "{{step_1['personalization_vars']['email_subject']}}",
+                                            "receiver": [
+                                              "{{step_1['user_info']['email']}}"
+                                            ],
+                                            "reply_to": [],
+                                            "body_type": "html",
+                                            "attachment": "{{step_12['outputUrl']}}",
+                                            "sender_name": "Equipo Menatech",
+                                            "attachment_name": "{{step_12['outputName']}}"
+                                          },
+                                          "pieceName": "@activepieces/piece-gmail",
+                                          "actionName": "send_email",
+                                          "sampleData": {},
+                                          "pieceVersion": "0.8.6",
+                                          "propertySettings": {
+                                            "cc": {
+                                              "type": "MANUAL"
+                                            },
+                                            "bcc": {
+                                              "type": "MANUAL"
+                                            },
+                                            "auth": {
+                                              "type": "MANUAL"
+                                            },
+                                            "body": {
+                                              "type": "MANUAL"
+                                            },
+                                            "from": {
+                                              "type": "MANUAL"
+                                            },
+                                            "draft": {
+                                              "type": "MANUAL"
+                                            },
+                                            "subject": {
+                                              "type": "MANUAL"
+                                            },
+                                            "receiver": {
+                                              "type": "MANUAL"
+                                            },
+                                            "reply_to": {
+                                              "type": "MANUAL"
+                                            },
+                                            "body_type": {
+                                              "type": "MANUAL"
+                                            },
+                                            "attachment": {
+                                              "type": "MANUAL"
+                                            },
+                                            "in_reply_to": {
+                                              "type": "MANUAL"
+                                            },
+                                            "sender_name": {
+                                              "type": "MANUAL"
+                                            },
+                                            "attachment_name": {
+                                              "type": "MANUAL"
+                                            }
+                                          },
+                                          "errorHandlingOptions": {
+                                            "retryOnFailure": {
+                                              "value": true
+                                            },
+                                            "continueOnFailure": {
+                                              "value": false
+                                            }
+                                          }
+                                        },
+                                        "nextAction": {
+                                          "name": "step_14",
+                                          "skip": false,
+                                          "type": "PIECE",
+                                          "valid": true,
+                                          "settings": {
+                                            "input": {
+                                              "auth": "{{connections['LaOGjinM9IJNxONjjBK1g']}}",
+                                              "values": {
+                                                "A": "\"{{new Date().toISOString()}}\"",
+                                                "B": "{{step_1['user_info']['name']}} {{step_1['user_info']['lastName']}}",
+                                                "C": "{{step_1['user_info']['company']}}",
+                                                "D": "{{step_1['user_info']['email']}}",
+                                                "E": "{{step_1['project_info']['platform']}}",
+                                                "F": "{{step_1['personalization_vars']['project_context']}}",
+                                                "G": "{{step_1['user_info']['technical_level']}}",
+                                                "H": "{{step_1['complexity_analysis']['score']}}",
+                                                "I": "{{step_1['project_info']['design_preferences']['visualStyle']}}",
+                                                "J": "{{step_1['project_info']['design_preferences']['colorPalette']}}",
+                                                "K": "{{step_1['project_info']['requirements']}}",
+                                                "L": "{{step_1['project_info']['target_audience']}}",
+                                                "M": "{{step_1['project_info']['security_level']}}",
+                                                "N": "{{step_12['outputUrl']}}"
+                                              },
+                                              "sheetId": 0,
+                                              "as_string": false,
+                                              "spreadsheetId": "1M2-DLBCh29JQ7_B6pxFCYc2OKo_Y59FyG8Hme2YH6Q0",
+                                              "first_row_headers": true,
+                                              "includeTeamDrives": false
+                                            },
+                                            "pieceName": "@activepieces/piece-google-sheets",
+                                            "actionName": "insert_row",
+                                            "sampleData": {},
+                                            "pieceVersion": "0.12.20",
+                                            "propertySettings": {
+                                              "auth": {
+                                                "type": "MANUAL"
+                                              },
+                                              "values": {
+                                                "type": "MANUAL",
+                                                "schema": {
+                                                  "A": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Date",
+                                                    "displayName": "Date",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "B": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Nombre",
+                                                    "displayName": "Nombre",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "C": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Empresa",
+                                                    "displayName": "Empresa",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "D": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Email",
+                                                    "displayName": "Email",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "E": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Plataforma",
+                                                    "displayName": "Plataforma",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "F": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Proyecto",
+                                                    "displayName": "Proyecto",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "G": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Experiencia IA",
+                                                    "displayName": "Experiencia IA",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "H": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Complejidad",
+                                                    "displayName": "Complejidad",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "I": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Estilo Visual",
+                                                    "displayName": "Estilo Visual",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "J": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Paleta de Colores",
+                                                    "displayName": "Paleta de Colores",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "K": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Funcionalidades",
+                                                    "displayName": "Funcionalidades",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "L": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Audiencia",
+                                                    "displayName": "Audiencia",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "M": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "Nivel de Seguridad",
+                                                    "displayName": "Nivel de Seguridad",
+                                                    "defaultValue": ""
+                                                  },
+                                                  "N": {
+                                                    "type": "SHORT_TEXT",
+                                                    "required": false,
+                                                    "description": "PDF",
+                                                    "displayName": "PDF",
+                                                    "defaultValue": ""
+                                                  }
+                                                }
+                                              },
+                                              "sheetId": {
+                                                "type": "MANUAL"
+                                              },
+                                              "as_string": {
+                                                "type": "MANUAL"
+                                              },
+                                              "spreadsheetId": {
+                                                "type": "MANUAL"
+                                              },
+                                              "first_row_headers": {
+                                                "type": "MANUAL"
+                                              },
+                                              "includeTeamDrives": {
+                                                "type": "MANUAL"
+                                              }
+                                            },
+                                            "errorHandlingOptions": {
+                                              "retryOnFailure": {
+                                                "value": true
+                                              },
+                                              "continueOnFailure": {
+                                                "value": false
+                                              }
+                                            }
+                                          },
+                                          "nextAction": {
+                                            "name": "step_15",
+                                            "skip": false,
+                                            "type": "PIECE",
+                                            "valid": true,
+                                            "settings": {
+                                              "input": {
+                                                "auth": "{{connections['VjH6uUcTOrNRdBiYWarN9']}}",
+                                                "file": "{{step_12['outputUrl']}}",
+                                                "text": "Se ha completado exitosamente un proceso de \"promptGEN\" #fuckyes🔥",
+                                                "channel": "C096JQX0PNE"
+                                              },
+                                              "pieceName": "@activepieces/piece-slack",
+                                              "pieceType": "OFFICIAL",
+                                              "actionName": "send_channel_message",
+                                              "packageType": "REGISTRY",
+                                              "pieceVersion": "0.9.5",
+                                              "propertySettings": {
+                                                "auth": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "file": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "text": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "channel": {
+                                                  "type": "MANUAL"
+                                                },
+                                                "username": {
+                                                  "type": "MANUAL"
+                                                }
+                                              },
+                                              "sampleDataSettings": {
+                                                "lastTestDate": "2025-07-19T04:23:08.399Z"
+                                              },
+                                              "errorHandlingOptions": {
+                                                "retryOnFailure": {
+                                                  "value": true
+                                                },
+                                                "continueOnFailure": {
+                                                  "value": false
+                                                }
+                                              }
+                                            },
+                                            "displayName": "Notification"
+                                          },
+                                          "displayName": "Repositorio"
+                                        },
+                                        "displayName": "Send Email"
+                                      },
+                                      "displayName": "Parsing | Email Body"
+                                    },
+                                    "displayName": "email body"
+                                  },
+                                  "displayName": "Convert HTML to PDF"
+                                },
+                                "displayName": "Limpirador HTML"
+                              },
+                              "displayName": "HTML Format"
+                            },
+                            "displayName": "Implementation Guide"
+                          },
+                          "displayName": "Parsing | Prompt Merger"
+                        },
+                        "displayName": "Prompt Merger"
+                      },
+                      "displayName": "Variants Parsing"
+                    },
+                    "displayName": "Prompts Creation"
+                  },
+                  "displayName": "Parsing | Use cases"
+                },
+                "displayName": "Research: Use Cases"
+              },
+              "displayName": "Parsing | Official Documentation"
+            },
+            "displayName": "Research: Official Documentation"
+          },
+          "displayName": "Parsing | Trigger"
+        }
+      },
+      "valid": true,
+      "schemaVersion": "16",
+      "notes": []
+    }
+  ]
+}

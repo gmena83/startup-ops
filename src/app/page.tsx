@@ -7,12 +7,15 @@ import { FeaturesSection } from "@/components/landing/features-section";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { CTASection } from "@/components/landing/cta-section";
 
+import { VideoSection } from "@/components/landing/video-section";
+
 export default function HomePage() {
   return (
     <>
       <Navbar />
       <main>
         <HeroSection />
+        <VideoSection />
         <ProblemSolutionCarousel />
         <HowItWorksSection />
         <FeaturesSection />
