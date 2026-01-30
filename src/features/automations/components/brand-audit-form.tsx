@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { startBrandAudit } from '@/app/actions/brand-audit-actions'
+import { startBrandAudit } from '@/features/automations/api/brand-audit'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GlassCard } from '@/components/ui/glass-card'

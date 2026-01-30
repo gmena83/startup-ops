@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/glass-card";
-import { AutomationCard } from "@/components/dashboard/automation-card";
+import { AutomationCard } from "@/features/dashboard/components/automation-card";
 import {
     Search,
     FileText,

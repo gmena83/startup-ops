@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { startBloggerAutomation } from "@/app/actions/blogger";
+import { startBloggerAutomation } from "@/features/automations/api/blogger";
 import { useLanguage } from "@/components/ui/language-provider";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ProcessingAnimation } from "@/components/automations/processing-animation";
+import { ProcessingAnimation } from "@/features/automations/components/processing-animation";
 import { ArrowRight, BookOpen, PenTool } from "lucide-react";
 import { motion } from "framer-motion";
 

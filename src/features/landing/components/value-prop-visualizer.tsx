@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { AlertCircle, CheckCircle2, Mail, FileText, Ban, DollarSign, Clock, LayoutGrid, BrainCircuit } from "lucide-react";
 
 interface ValuePropVisualizerProps {

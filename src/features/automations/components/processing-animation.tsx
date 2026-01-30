@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { CheckCircle2, Loader2, Brain, Search, MessageSquare, Zap, ShieldAlert, TrendingUp } from "lucide-react";
 
 // Icons representing the Council of Six

@@ -1,4 +1,4 @@
-import { BrandAuditForm } from '@/components/automations/brand-audit-form'
+import { BrandAuditForm } from '@/features/automations/components/brand-audit-form'
 
 export default function BrandAuditPage() {
     return (

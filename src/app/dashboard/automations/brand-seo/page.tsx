@@ -23,8 +23,8 @@ import {
     XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { startBrandAudit, type BrandAuditResponse } from "@/app/actions/brand-seo";
-import { ProcessingAnimation } from "@/components/automations/processing-animation";
+import { startBrandAudit, type BrandAuditResponse } from "@/features/automations/api/brand-seo";
+import { ProcessingAnimation } from "@/features/automations/components/processing-animation";
 
 interface FormData {
     companyName: string;

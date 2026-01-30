@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { submitPromptRequest, type PromptState } from '@/app/actions/lead-magnet'
+import { submitPromptRequest, type PromptState } from '@/features/automations/api/lead-magnet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GlassCard } from '@/components/ui/glass-card'

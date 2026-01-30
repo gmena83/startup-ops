@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import { AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 
 // Data derived from the PPTX content provided

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AutomationCard } from "@/components/dashboard/automation-card";
+import { AutomationCard } from "@/features/dashboard/components/automation-card";
 import {
     Search,
     FileText,
